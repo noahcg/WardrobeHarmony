@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { ClothingCard } from "../components/ClothingCard";
+import { EmptyState } from "../components/EmptyState";
 import { FilterChip } from "../components/FilterChip";
 import { ClothingCategory, ClothingItem } from "../models/clothing";
 import { colors } from "../theme/colors";
@@ -70,6 +71,7 @@ export function ClosetScreen({ wardrobe, onOpenItem, onBuild }: Props) {
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => <ClothingCard item={item} onPress={() => onOpenItem(item)} />}
+        ListEmptyComponent={<EmptyState title="No items found" message="Adjust the filter or add a new clothing item to your wardrobe." />}
         showsVerticalScrollIndicator={false}
       />
     </View>

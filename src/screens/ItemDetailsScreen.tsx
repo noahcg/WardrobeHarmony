@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { AppHeader } from "../components/AppHeader";
 import { ColorSwatch } from "../components/ColorSwatch";
@@ -11,19 +11,28 @@ import { colorFamilyHex, colors } from "../theme/colors";
 type Props = {
   item: ClothingItem;
   onBack: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   onOpenColorGuide: () => void;
 };
 
-export function ItemDetailsScreen({ item, onBack, onOpenColorGuide }: Props) {
+export function ItemDetailsScreen({ item, onBack, onEdit, onDelete, onOpenColorGuide }: Props) {
+  const confirmDelete = () => {
+    Alert.alert("Delete item?", `${item.name} will be removed from your wardrobe.`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: onDelete },
+    ]);
+  };
+
   return (
     <View style={styles.screen}>
       <AppHeader title="Item Details" leftIcon="chevron-back" rightIcon="ellipsis-horizontal" onLeftPress={onBack} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.image, { backgroundColor: colorFamilyHex[item.colorFamily] }]}>
           {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.photo} /> : <Ionicons name="shirt-outline" size={96} color={colors.cream} />}
-          <View style={styles.edit}>
+          <Pressable style={styles.edit} onPress={onEdit}>
             <Ionicons name="create-outline" size={20} color={colors.background} />
-          </View>
+          </Pressable>
         </View>
         <View>
           <Text style={styles.name}>{item.name}</Text>
@@ -53,10 +62,10 @@ export function ItemDetailsScreen({ item, onBack, onOpenColorGuide }: Props) {
         </View>
         <IconActionBar
           actions={[
-            { icon: "trash-outline" },
+            { icon: "trash-outline", onPress: confirmDelete },
             { icon: "heart-outline" },
             { icon: "share-social-outline", onPress: onOpenColorGuide },
-            { icon: "ellipsis-horizontal" },
+            { icon: "create-outline", onPress: onEdit },
           ]}
         />
       </ScrollView>

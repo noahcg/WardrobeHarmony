@@ -13,12 +13,13 @@ import { HomeScreen } from "./src/screens/HomeScreen";
 import { ItemDetailsScreen } from "./src/screens/ItemDetailsScreen";
 import { OutfitBuilderScreen } from "./src/screens/OutfitBuilderScreen";
 import { OutfitsScreen } from "./src/screens/OutfitsScreen";
-import { loadWardrobe, saveWardrobe } from "./src/storage/wardrobeStore";
+import { deleteStoredImage, loadWardrobe, saveWardrobe } from "./src/storage/wardrobeStore";
 import { colors } from "./src/theme/colors";
 
 type Screen =
   | BottomTab
   | "itemDetails"
+  | "editItem"
   | "builder"
   | "colorGuide"
   | "addLink";
@@ -64,6 +65,29 @@ export default function App() {
     setScreen("closet");
   };
 
+  const updateItem = async (item: ClothingItem) => {
+    const previous = wardrobe.find((entry) => entry.id === item.id);
+    const nextWardrobe = wardrobe.map((entry) => (entry.id === item.id ? item : entry));
+    await persistWardrobe(nextWardrobe);
+    if (previous?.imageUrl && previous.imageUrl !== item.imageUrl) {
+      await deleteStoredImage(previous.imageUrl);
+    }
+    setSelectedItem(item);
+    setBuilderSeed((current) => current.map((entry) => (entry.id === item.id ? item : entry)));
+    setScreen("itemDetails");
+  };
+
+  const deleteItem = async (item: ClothingItem) => {
+    const nextWardrobe = wardrobe.filter((entry) => entry.id !== item.id);
+    await persistWardrobe(nextWardrobe);
+    await deleteStoredImage(item.imageUrl);
+    const fallback = nextWardrobe[0] ?? mockWardrobe[0];
+    setSelectedItem(fallback);
+    setBuilderSeed((current) => current.filter((entry) => entry.id !== item.id));
+    setActiveTab("closet");
+    setScreen("closet");
+  };
+
   const showTabs = ["home", "closet", "add", "outfits", "profile"].includes(screen);
   const route = useMemo(() => {
     switch (screen) {
@@ -91,6 +115,15 @@ export default function App() {
         );
       case "add":
         return <AddItemScreen onOpenLink={() => setScreen("addLink")} onClose={() => setScreen(activeTab)} onSave={addItem} />;
+      case "editItem":
+        return (
+          <AddItemScreen
+            editingItem={selectedItem}
+            onOpenLink={() => setScreen("addLink")}
+            onClose={() => setScreen("itemDetails")}
+            onSave={updateItem}
+          />
+        );
       case "outfits":
         return <OutfitsScreen wardrobe={wardrobe} onOpenBuilder={() => setScreen("builder")} />;
       case "profile":
@@ -100,6 +133,8 @@ export default function App() {
           <ItemDetailsScreen
             item={selectedItem}
             onBack={() => setScreen(activeTab)}
+            onEdit={() => setScreen("editItem")}
+            onDelete={() => deleteItem(selectedItem)}
             onOpenColorGuide={() => setScreen("colorGuide")}
           />
         );

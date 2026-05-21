@@ -33,6 +33,14 @@ export async function persistItemImage(sourceUri: string, itemId: string) {
   return destination;
 }
 
+export async function deleteStoredImage(imageUri?: string) {
+  if (!imageUri?.startsWith(imagesDir)) return;
+  const info = await FileSystem.getInfoAsync(imageUri);
+  if (info.exists) {
+    await FileSystem.deleteAsync(imageUri, { idempotent: true });
+  }
+}
+
 async function ensureStorage() {
   if (!FileSystem.documentDirectory) {
     throw new Error("File storage is not available on this device.");

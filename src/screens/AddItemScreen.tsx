@@ -14,6 +14,7 @@ import { ClothingCategory, ClothingItem, ColorFamily, Formality, Pattern, Satura
 import { colors } from "../theme/colors";
 
 type Props = {
+  editingItem?: ClothingItem;
   onOpenLink: () => void;
   onClose: () => void;
   onSave: (item: ClothingItem) => void;
@@ -24,17 +25,17 @@ const categoryOptions: ClothingCategory[] = ["top", "bottom", "shoes", "outerwea
 const formalityOptions: Formality[] = ["casual", "smart-casual", "business", "formal"];
 const patternOptions: Pattern[] = ["solid", "stripe", "plaid", "check", "graphic", "texture"];
 
-export function AddItemScreen({ onOpenLink, onClose, onSave }: Props) {
+export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Props) {
   const [mode, setMode] = useState<"photo" | "link" | "manual">("photo");
-  const [imageUri, setImageUri] = useState<string>();
-  const [name, setName] = useState("New Wardrobe Item");
-  const [subcategory, setSubcategory] = useState("Button Down");
-  const [colorFamily, setColorFamily] = useState<ColorFamily>("sage");
-  const [category, setCategory] = useState<ClothingCategory>("top");
-  const [tone, setTone] = useState<Tone>("medium");
-  const [saturation, setSaturation] = useState<Saturation>("muted");
-  const [formality, setFormality] = useState<Formality>("smart-casual");
-  const [pattern, setPattern] = useState<Pattern>("solid");
+  const [imageUri, setImageUri] = useState<string | undefined>(editingItem?.imageUrl);
+  const [name, setName] = useState(editingItem?.name ?? "New Wardrobe Item");
+  const [subcategory, setSubcategory] = useState(editingItem?.subcategory ?? "Button Down");
+  const [colorFamily, setColorFamily] = useState<ColorFamily>(editingItem?.colorFamily ?? "sage");
+  const [category, setCategory] = useState<ClothingCategory>(editingItem?.category ?? "top");
+  const [tone, setTone] = useState<Tone>(editingItem?.tone ?? "medium");
+  const [saturation, setSaturation] = useState<Saturation>(editingItem?.saturation ?? "muted");
+  const [formality, setFormality] = useState<Formality>(editingItem?.formality ?? "smart-casual");
+  const [pattern, setPattern] = useState<Pattern>(editingItem?.pattern ?? "solid");
   const [isSaving, setIsSaving] = useState(false);
 
   const pickImage = async () => {
@@ -80,9 +81,10 @@ export function AddItemScreen({ onOpenLink, onClose, onSave }: Props) {
 
     setIsSaving(true);
     try {
-      const id = `${trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now()}`;
-      const savedImage = imageUri ? await persistItemImage(imageUri, id) : undefined;
+      const id = editingItem?.id ?? `${trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now()}`;
+      const savedImage = imageUri && imageUri !== editingItem?.imageUrl ? await persistItemImage(imageUri, id) : imageUri;
       onSave({
+        ...editingItem,
         id,
         name: trimmedName,
         category,
@@ -93,11 +95,11 @@ export function AddItemScreen({ onOpenLink, onClose, onSave }: Props) {
         saturation,
         formality,
         pattern,
-        seasons: ["all-season"],
+        seasons: editingItem?.seasons ?? ["all-season"],
         imageUrl: savedImage,
         confidence: "high",
-        notes: "Added from your iPhone. Color and clothing details are editable metadata.",
-        tags: ["user-added"],
+        notes: editingItem?.notes ?? "Added from your iPhone. Color and clothing details are editable metadata.",
+        tags: editingItem?.tags ?? ["user-added"],
       });
     } catch (error) {
       Alert.alert("Could not save item", error instanceof Error ? error.message : "Try again.");
@@ -108,7 +110,7 @@ export function AddItemScreen({ onOpenLink, onClose, onSave }: Props) {
 
   return (
     <View style={styles.screen}>
-      <AppHeader title="Add Item" leftIcon="close" onLeftPress={onClose} />
+      <AppHeader title={editingItem ? "Edit Item" : "Add Item"} leftIcon="close" onLeftPress={onClose} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <SegmentedControl
           options={["photo", "link", "manual"]}
@@ -185,7 +187,7 @@ export function AddItemScreen({ onOpenLink, onClose, onSave }: Props) {
             ))}
           </View>
         </View>
-        <PrimaryButton label={isSaving ? "Saving..." : "Save Item"} icon="checkmark" onPress={saveItem} />
+        <PrimaryButton label={isSaving ? "Saving..." : editingItem ? "Save Changes" : "Save Item"} icon="checkmark" onPress={saveItem} />
       </ScrollView>
     </View>
   );
