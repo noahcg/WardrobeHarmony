@@ -10,4 +10,16 @@ export type Outfit = {
   rating: OutfitRating;
   reasons: string[];
   warnings: string[];
+  favorite?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type SavedOutfit = {
+  id: string;
+  name: string;
+  itemIds: string[];
+  favorite: boolean;
+  createdAt: string;
+  updatedAt: string;
 };

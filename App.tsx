@@ -4,11 +4,12 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { mockWardrobe } from "./src/data/mockWardrobe";
 import { ClothingItem } from "./src/models/clothing";
+import { SavedOutfit } from "./src/models/outfit";
 import { AddFromLinkScreen } from "./src/screens/AddFromLinkScreen";
 import { AddItemScreen } from "./src/screens/AddItemScreen";
 import { ClosetScreen } from "./src/screens/ClosetScreen";
@@ -17,6 +18,8 @@ import { HomeScreen } from "./src/screens/HomeScreen";
 import { ItemDetailsScreen } from "./src/screens/ItemDetailsScreen";
 import { OutfitBuilderScreen } from "./src/screens/OutfitBuilderScreen";
 import { OutfitsScreen } from "./src/screens/OutfitsScreen";
+import { evaluateCompatibility } from "./src/lib/matchingEngine";
+import { loadSavedOutfits, saveOutfits } from "./src/storage/outfitStore";
 import { deleteStoredImage, loadWardrobe, saveWardrobe } from "./src/storage/wardrobeStore";
 import { colors } from "./src/theme/colors";
 
@@ -25,7 +28,7 @@ type RootStackParamList = {
   AddItem: { editingItemId?: string } | undefined;
   AddFromLink: undefined;
   ItemDetails: { itemId: string };
-  OutfitBuilder: { seedIds?: string[] } | undefined;
+  OutfitBuilder: { seedIds?: string[]; outfitId?: string } | undefined;
   ColorGuide: { itemId?: string } | undefined;
 };
 
@@ -40,9 +43,12 @@ type TabParamList = {
 type WardrobeContextValue = {
   wardrobe: ClothingItem[];
   selectedItem: ClothingItem;
+  savedOutfits: SavedOutfit[];
   addItem: (item: ClothingItem) => Promise<void>;
   updateItem: (item: ClothingItem) => Promise<void>;
   deleteItem: (item: ClothingItem) => Promise<void>;
+  saveOutfitFromItems: (items: ClothingItem[]) => Promise<SavedOutfit>;
+  getSavedOutfit: (id?: string) => SavedOutfit | undefined;
   getItem: (id?: string) => ClothingItem;
 };
 
@@ -53,6 +59,7 @@ const WardrobeContext = createContext<WardrobeContextValue | null>(null);
 export default function App() {
   const [wardrobe, setWardrobe] = useState<ClothingItem[]>(mockWardrobe);
   const [selectedItem, setSelectedItem] = useState<ClothingItem>(mockWardrobe[0]);
+  const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -65,6 +72,14 @@ export default function App() {
       .catch((error) => {
         console.warn("Could not load wardrobe", error);
       });
+    loadSavedOutfits()
+      .then((outfits) => {
+        if (!mounted) return;
+        setSavedOutfits(outfits);
+      })
+      .catch((error) => {
+        console.warn("Could not load outfits", error);
+      });
     return () => {
       mounted = false;
     };
@@ -75,13 +90,21 @@ export default function App() {
     await saveWardrobe(items);
   };
 
+  const persistOutfits = async (outfits: SavedOutfit[]) => {
+    setSavedOutfits(outfits);
+    await saveOutfits(outfits);
+  };
+
   const value = useMemo<WardrobeContextValue>(() => {
     const getItem = (id?: string) => wardrobe.find((item) => item.id === id) ?? selectedItem ?? wardrobe[0] ?? mockWardrobe[0];
+    const getSavedOutfit = (id?: string) => savedOutfits.find((outfit) => outfit.id === id);
 
     return {
       wardrobe,
       selectedItem,
+      savedOutfits,
       getItem,
+      getSavedOutfit,
       addItem: async (item) => {
         const nextWardrobe = [item, ...wardrobe];
         await persistWardrobe(nextWardrobe);
@@ -98,12 +121,35 @@ export default function App() {
       },
       deleteItem: async (item) => {
         const nextWardrobe = wardrobe.filter((entry) => entry.id !== item.id);
+        const nextOutfits = savedOutfits
+          .map((outfit) => ({
+            ...outfit,
+            itemIds: outfit.itemIds.filter((id) => id !== item.id),
+            updatedAt: new Date().toISOString(),
+          }))
+          .filter((outfit) => outfit.itemIds.length > 0);
         await persistWardrobe(nextWardrobe);
+        await persistOutfits(nextOutfits);
         await deleteStoredImage(item.imageUrl);
         setSelectedItem(nextWardrobe[0] ?? mockWardrobe[0]);
       },
+      saveOutfitFromItems: async (items) => {
+        const result = evaluateCompatibility(items);
+        const now = new Date().toISOString();
+        const name = createOutfitName(items);
+        const outfit: SavedOutfit = {
+          id: `outfit-${Date.now()}`,
+          name,
+          itemIds: items.map((item) => item.id),
+          favorite: result.score >= 85,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await persistOutfits([outfit, ...savedOutfits]);
+        return outfit;
+      },
     };
-  }, [selectedItem, wardrobe]);
+  }, [savedOutfits, selectedItem, wardrobe]);
 
   return (
     <SafeAreaProvider>
@@ -185,8 +231,15 @@ function ClosetRoute({ navigation }: any) {
 }
 
 function OutfitsRoute({ navigation }: any) {
-  const { wardrobe } = useWardrobe();
-  return <OutfitsScreen wardrobe={wardrobe} onOpenBuilder={() => navigation.navigate("OutfitBuilder")} />;
+  const { savedOutfits, wardrobe } = useWardrobe();
+  return (
+    <OutfitsScreen
+      wardrobe={wardrobe}
+      savedOutfits={savedOutfits}
+      onOpenBuilder={() => navigation.navigate("OutfitBuilder")}
+      onOpenOutfit={(outfit) => navigation.navigate("OutfitBuilder", { outfitId: outfit.id })}
+    />
+  );
 }
 
 function GuideRoute({ navigation }: any) {
@@ -242,16 +295,24 @@ function ItemDetailsRoute({ navigation, route }: any) {
 }
 
 function OutfitBuilderRoute({ navigation, route }: any) {
-  const { wardrobe } = useWardrobe();
+  const { getSavedOutfit, saveOutfitFromItems, wardrobe } = useWardrobe();
   const seedIds = route.params?.seedIds as string[] | undefined;
-  const initialItems = seedIds?.length
-    ? (seedIds.map((id) => wardrobe.find((item) => item.id === id)).filter(Boolean) as ClothingItem[])
+  const saved = getSavedOutfit(route.params?.outfitId);
+  const initialIds = saved?.itemIds ?? seedIds;
+  const initialItems = initialIds?.length
+    ? (initialIds.map((id) => wardrobe.find((item) => item.id === id)).filter(Boolean) as ClothingItem[])
     : getDefaultBuilderSeed(wardrobe);
   return (
     <OutfitBuilderScreen
       wardrobe={wardrobe}
       initialItems={initialItems}
       onClose={() => navigation.goBack()}
+      onSaveOutfit={async (items) => {
+        const outfit = await saveOutfitFromItems(items);
+        Alert.alert("Outfit saved", `${outfit.name} is now in your outfits.`);
+        navigation.goBack();
+        navigation.navigate("MainTabs", { screen: "Outfits" });
+      }}
       onOpenColorGuide={(item) => navigation.navigate("ColorGuide", { itemId: item.id })}
     />
   );
@@ -275,6 +336,14 @@ function getDefaultBuilderSeed(items: ClothingItem[]) {
   const bottom = items.find((item) => item.category === "bottom");
   const shoes = items.find((item) => item.category === "shoes");
   return [top, bottom, shoes].filter(Boolean) as ClothingItem[];
+}
+
+function createOutfitName(items: ClothingItem[]) {
+  const families = Array.from(new Set(items.map((item) => item.colorFamily))).slice(0, 3);
+  if (families.length > 0) {
+    return `${families.map((family) => family.charAt(0).toUpperCase() + family.slice(1)).join(", ")} Outfit`;
+  }
+  return "Saved Outfit";
 }
 
 function tabIcon(icon: keyof typeof Ionicons.glyphMap) {

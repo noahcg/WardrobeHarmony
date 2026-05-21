@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { AppHeader } from "../components/AppHeader";
 import { CompatibilityExplanation } from "../components/CompatibilityExplanation";
@@ -16,10 +16,11 @@ type Props = {
   wardrobe: ClothingItem[];
   initialItems: ClothingItem[];
   onClose: () => void;
+  onSaveOutfit: (items: ClothingItem[]) => void;
   onOpenColorGuide: (item: ClothingItem) => void;
 };
 
-export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onOpenColorGuide }: Props) {
+export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onSaveOutfit, onOpenColorGuide }: Props) {
   const [items, setItems] = useState<ClothingItem[]>(initialItems);
   const result = useMemo(() => evaluateCompatibility(items), [items]);
   const swaps = useMemo(() => findSuggestedSwaps(items, wardrobe), [items, wardrobe]);
@@ -41,9 +42,17 @@ export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onOpenCol
     });
   };
 
+  const saveOutfit = () => {
+    if (items.length < 2) {
+      Alert.alert("Add more items", "Choose at least two pieces before saving an outfit.");
+      return;
+    }
+    onSaveOutfit(items);
+  };
+
   return (
     <View style={styles.screen}>
-      <AppHeader title="Outfit Builder" leftIcon="close" rightLabel="Save" onLeftPress={onClose} />
+      <AppHeader title="Outfit Builder" leftIcon="close" rightLabel="Save" onLeftPress={onClose} onRightPress={saveOutfit} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <OutfitCanvas items={items} />
         <View style={styles.floating}>
@@ -52,7 +61,7 @@ export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onOpenCol
               { icon: "add" },
               { icon: "color-palette-outline", onPress: () => items[0] && onOpenColorGuide(items[0]) },
               { icon: "shuffle-outline", onPress: () => setItems(getShuffleOutfit(wardrobe)) },
-              { icon: "heart-outline" },
+              { icon: "heart-outline", onPress: saveOutfit },
             ]}
           />
         </View>

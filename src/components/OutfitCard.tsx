@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { OutfitCanvas } from "./OutfitCanvas";
 import { ScoreBadge } from "./ScoreBadge";
@@ -15,6 +16,11 @@ export function OutfitCard({ outfit, onPress }: Props) {
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.canvasWrap}>
         <OutfitCanvas items={outfit.items} />
+        {outfit.favorite ? (
+          <View style={styles.favorite}>
+            <Ionicons name="heart" size={15} color={colors.background} />
+          </View>
+        ) : null}
       </View>
       <Text style={styles.name}>{outfit.name}</Text>
       <ScoreBadge score={outfit.score} rating={outfit.rating} />
@@ -36,6 +42,17 @@ const styles = StyleSheet.create({
     height: 160,
     overflow: "hidden",
     borderRadius: 18,
+  },
+  favorite: {
+    position: "absolute",
+    right: 8,
+    top: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.gold,
+    alignItems: "center",
+    justifyContent: "center",
   },
   name: {
     color: colors.text,

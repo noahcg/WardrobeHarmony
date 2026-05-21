@@ -2,36 +2,43 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { EmptyState } from "../components/EmptyState";
 import { OutfitCard } from "../components/OutfitCard";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { evaluateCompatibility } from "../lib/matchingEngine";
 import { ClothingItem } from "../models/clothing";
-import { Outfit } from "../models/outfit";
+import { Outfit, SavedOutfit } from "../models/outfit";
 import { colors } from "../theme/colors";
 
 type Props = {
   wardrobe: ClothingItem[];
+  savedOutfits: SavedOutfit[];
   onOpenBuilder: () => void;
+  onOpenOutfit: (outfit: SavedOutfit) => void;
 };
 
-export function OutfitsScreen({ wardrobe, onOpenBuilder }: Props) {
+export function OutfitsScreen({ wardrobe, savedOutfits, onOpenBuilder, onOpenOutfit }: Props) {
   const [filter, setFilter] = useState<"all" | "favorites" | "recent">("all");
   const outfits = useMemo<Outfit[]>(() => {
-    const tops = wardrobe.filter((item) => item.category === "top");
-    const bottoms = wardrobe.filter((item) => item.category === "bottom");
-    const shoes = wardrobe.filter((item) => item.category === "shoes");
-    const outerwear = wardrobe.filter((item) => item.category === "outerwear");
-    const sets = [
-      { id: "first-saved", name: "Saved Foundation", items: [tops[0], bottoms[0], shoes[0]].filter(Boolean) as ClothingItem[] },
-      { id: "soft-layer", name: "Soft Layer", items: [tops[1] ?? tops[0], bottoms[0], outerwear[0], shoes[0]].filter(Boolean) as ClothingItem[] },
-      { id: "weekend", name: "Weekend Mix", items: [tops[2] ?? tops[0], bottoms[1] ?? bottoms[0], shoes[1] ?? shoes[0]].filter(Boolean) as ClothingItem[] },
-      { id: "polished", name: "Polished Neutral", items: [tops[0], bottoms[0], outerwear[1] ?? outerwear[0], shoes[0]].filter(Boolean) as ClothingItem[] },
-    ].filter((set) => set.items.length > 0);
-    return sets.map((set) => {
-      const result = evaluateCompatibility(set.items);
-      return { ...set, score: result.score, rating: result.rating, reasons: result.reasons, warnings: result.warnings };
-    });
-  }, [wardrobe]);
+    return savedOutfits
+      .filter((saved) => (filter === "favorites" ? saved.favorite : true))
+      .sort((a, b) => (filter === "recent" ? b.updatedAt.localeCompare(a.updatedAt) : b.createdAt.localeCompare(a.createdAt)))
+      .map((saved) => {
+        const items = saved.itemIds.map((id) => wardrobe.find((item) => item.id === id)).filter(Boolean) as ClothingItem[];
+        return { ...saved, items };
+      })
+      .filter((set) => set.items.length > 0)
+      .map((set) => {
+        const result = evaluateCompatibility(set.items);
+        return {
+          ...set,
+          score: result.score,
+          rating: result.rating,
+          reasons: result.reasons,
+          warnings: result.warnings,
+        };
+      });
+  }, [filter, savedOutfits, wardrobe]);
 
   return (
     <View style={styles.screen}>
@@ -48,7 +55,11 @@ export function OutfitsScreen({ wardrobe, onOpenBuilder }: Props) {
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.grid}
-        renderItem={({ item }) => <OutfitCard outfit={item} onPress={onOpenBuilder} />}
+        renderItem={({ item }) => {
+          const saved = savedOutfits.find((outfit) => outfit.id === item.id);
+          return <OutfitCard outfit={item} onPress={() => (saved ? onOpenOutfit(saved) : onOpenBuilder())} />;
+        }}
+        ListEmptyComponent={<EmptyState title="No saved outfits" message="Build and save an outfit to start your outfit library." />}
         showsVerticalScrollIndicator={false}
       />
     </View>
