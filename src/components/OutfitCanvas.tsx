@@ -9,11 +9,11 @@ type Props = {
 };
 
 const positions: Record<ClothingItem["category"], object> = {
-  outerwear: { top: 18, left: 32, transform: [{ rotate: "-9deg" }] },
-  top: { top: 34, right: 46, transform: [{ rotate: "8deg" }] },
-  bottom: { bottom: 40, left: 70, transform: [{ rotate: "-5deg" }] },
-  shoes: { bottom: 26, right: 44, transform: [{ rotate: "12deg" }] },
-  accessory: { top: 146, right: 26, transform: [{ rotate: "-15deg" }] },
+  outerwear: { top: 18, left: 28, transform: [{ rotate: "-5deg" }] },
+  top: { top: 28, right: 42, transform: [{ rotate: "5deg" }] },
+  bottom: { bottom: 38, left: 76, transform: [{ rotate: "-3deg" }] },
+  shoes: { bottom: 26, right: 42, transform: [{ rotate: "-5deg" }] },
+  accessory: { top: 118, right: 24, transform: [{ rotate: "4deg" }] },
 };
 
 const icon: Record<ClothingItem["category"], keyof typeof Ionicons.glyphMap> = {
@@ -27,14 +27,14 @@ const icon: Record<ClothingItem["category"], keyof typeof Ionicons.glyphMap> = {
 export function OutfitCanvas({ items }: Props) {
   return (
     <View style={styles.canvas}>
-      <View style={styles.ring} />
+      <View style={styles.vignette} />
       {items.map((item) => (
         <View
           key={item.id}
           style={[
             styles.piece,
             positions[item.category],
-            { backgroundColor: colorFamilyHex[item.colorFamily] },
+            { backgroundColor: item.imageUrl ? colorFamilyHex[item.colorFamily] : colors.productMat },
             item.category === "bottom" && styles.bottom,
             item.category === "shoes" && styles.shoes,
             item.category === "accessory" && styles.accessory,
@@ -43,7 +43,17 @@ export function OutfitCanvas({ items }: Props) {
           {item.imageUrl ? (
             <Image source={{ uri: item.imageUrl }} style={styles.photo} />
           ) : (
-            <Ionicons name={icon[item.category]} size={item.category === "accessory" ? 24 : 40} color="rgba(247,242,232,0.88)" />
+            <View
+              style={[
+                styles.garment,
+                { backgroundColor: colorFamilyHex[item.colorFamily] },
+                item.category === "bottom" && styles.garmentBottom,
+                item.category === "shoes" && styles.garmentShoe,
+                item.category === "accessory" && styles.garmentAccessory,
+              ]}
+            >
+              <Ionicons name={icon[item.category]} size={item.category === "accessory" ? 22 : 38} color="rgba(247,242,232,0.82)" />
+            </View>
           )}
         </View>
       ))}
@@ -54,34 +64,36 @@ export function OutfitCanvas({ items }: Props) {
 const styles = StyleSheet.create({
   canvas: {
     height: 310,
-    borderRadius: 30,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: "#050B0E",
     overflow: "hidden",
   },
-  ring: {
+  vignette: {
     position: "absolute",
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    left: 18,
+    right: 18,
+    top: 18,
+    bottom: 18,
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.025)",
     borderWidth: 1,
-    borderColor: "rgba(199,162,74,0.2)",
-    top: 35,
-    left: 54,
+    borderColor: "rgba(191,169,124,0.14)",
   },
   piece: {
     position: "absolute",
-    width: 108,
-    height: 118,
-    borderRadius: 24,
+    width: 116,
+    height: 128,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(247,242,232,0.32)",
+    borderColor: "rgba(255,255,255,0.2)",
     shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOpacity: 0.42,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
     overflow: "hidden",
   },
   photo: {
@@ -90,17 +102,41 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   bottom: {
-    width: 92,
-    height: 142,
+    width: 86,
+    height: 148,
   },
   shoes: {
-    width: 96,
-    height: 72,
-    borderRadius: 22,
+    width: 104,
+    height: 60,
+    borderRadius: 18,
   },
   accessory: {
     width: 58,
     height: 58,
     borderRadius: 29,
+  },
+  garment: {
+    width: 78,
+    height: 92,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+  },
+  garmentBottom: {
+    width: 52,
+    height: 108,
+    borderRadius: 15,
+  },
+  garmentShoe: {
+    width: 82,
+    height: 34,
+    borderRadius: 17,
+  },
+  garmentAccessory: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
 });

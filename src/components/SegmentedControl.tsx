@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: "row",
     padding: 4,
-    borderRadius: 18,
+    borderRadius: 11,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -35,13 +35,13 @@ const styles = StyleSheet.create({
   option: {
     flex: 1,
     minHeight: 34,
-    borderRadius: 14,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 10,
   },
   active: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: "rgba(239,231,216,0.16)",
     borderWidth: 1,
     borderColor: colors.borderStrong,
   },

@@ -28,8 +28,19 @@ export function ClothingCard({ item, selected = false, compact = false, onPress 
           <Image source={{ uri: item.imageUrl }} style={styles.photo} />
         ) : (
           <>
-            <View style={styles.sheen} />
-            <Ionicons name={categoryIcon[item.category]} size={compact ? 28 : 38} color="rgba(247,242,232,0.88)" />
+            <View style={styles.productMat} />
+            <View style={[styles.garmentShadow, item.category === "shoes" && styles.shoeShadow]} />
+            <View
+              style={[
+                styles.garment,
+                { backgroundColor: colorFamilyHex[item.colorFamily] },
+                item.category === "bottom" && styles.pants,
+                item.category === "shoes" && styles.shoe,
+                item.category === "outerwear" && styles.outerwear,
+              ]}
+            >
+              <Ionicons name={categoryIcon[item.category]} size={compact ? 25 : 34} color="rgba(247,242,232,0.78)" />
+            </View>
           </>
         )}
       </View>
@@ -51,23 +62,27 @@ export function ClothingCard({ item, selected = false, compact = false, onPress 
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 188,
-    borderRadius: 20,
-    padding: 10,
+    minHeight: 178,
+    borderRadius: 18,
+    padding: 7,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
   compactCard: {
-    minHeight: 142,
+    minHeight: 132,
   },
   selected: {
     borderColor: colors.gold,
     backgroundColor: "#12180F",
   },
   image: {
-    height: 108,
-    borderRadius: 16,
+    height: 114,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -77,18 +92,50 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
-  sheen: {
+  productMat: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.productMat,
+  },
+  garmentShadow: {
     position: "absolute",
-    top: 0,
-    right: -25,
-    width: 80,
-    height: 140,
-    transform: [{ rotate: "22deg" }],
-    backgroundColor: "rgba(255,255,255,0.09)",
+    width: 78,
+    height: 88,
+    borderRadius: 22,
+    backgroundColor: "rgba(0,0,0,0.22)",
+    transform: [{ translateY: 7 }],
+  },
+  shoeShadow: {
+    width: 92,
+    height: 36,
+    borderRadius: 18,
+  },
+  garment: {
+    width: 78,
+    height: 88,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+  },
+  outerwear: {
+    width: 84,
+    height: 94,
+  },
+  pants: {
+    width: 58,
+    height: 98,
+    borderRadius: 16,
+  },
+  shoe: {
+    width: 96,
+    height: 42,
+    borderRadius: 20,
   },
   meta: {
     gap: 7,
-    paddingTop: 10,
+    paddingTop: 9,
+    paddingHorizontal: 2,
   },
   name: {
     color: colors.text,

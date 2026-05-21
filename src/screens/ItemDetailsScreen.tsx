@@ -75,10 +75,10 @@ export function ItemDetailsScreen({ item, onBack, onEdit, onDelete, onOpenColorG
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 18, gap: 16 },
+  content: { padding: 16, gap: 14, paddingBottom: 34 },
   image: {
     height: 320,
-    borderRadius: 34,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   subcategory: { color: colors.textMuted, fontSize: 15, marginTop: 3 },
   panel: {
     gap: 12,
-    borderRadius: 24,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

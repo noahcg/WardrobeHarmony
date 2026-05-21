@@ -1,12 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { ColorSwatchRow } from "../components/ColorSwatchRow";
-import { HangerLogo } from "../components/HangerLogo";
 import { LogoLockup } from "../components/LogoLockup";
 import { OutfitCanvas } from "../components/OutfitCanvas";
 import { PrimaryButton } from "../components/PrimaryButton";
-import { ScoreBadge } from "../components/ScoreBadge";
 import { evaluateCompatibility } from "../lib/matchingEngine";
 import { ClothingCategory, ClothingItem } from "../models/clothing";
 import { colors } from "../theme/colors";
@@ -34,18 +31,6 @@ export function HomeScreen({ wardrobe, onOpenBuilder, onOpenColorGuide }: Props)
         <Pressable style={styles.iconButton} onPress={onOpenColorGuide}>
           <Ionicons name="notifications-outline" size={20} color={colors.text} />
         </Pressable>
-      </View>
-
-      <View style={styles.hero}>
-        <View style={styles.appTile}>
-          <HangerLogo size={76} />
-        </View>
-        <Text style={styles.heroTitle}>
-          <Text style={styles.cream}>Wardrobe</Text>
-          <Text style={styles.sage}>Harmony</Text>
-        </Text>
-        <Text style={styles.tagline}>Color confidence. Outfits that work.</Text>
-        <ColorSwatchRow colors={["cream", "sage", "olive", "tan", "brown", "navy"]} />
       </View>
 
       <View style={styles.wardrobeCard}>
@@ -78,7 +63,10 @@ export function HomeScreen({ wardrobe, onOpenBuilder, onOpenColorGuide }: Props)
             <Text style={styles.pickTitle}>{todayItems.map((item) => item.colorFamily).join(", ")}</Text>
             <Text style={styles.muted}>Cool, 68°F</Text>
           </View>
-          <ScoreBadge score={result.score} rating={result.rating} />
+          <View style={styles.scorePill}>
+            <Text style={styles.scoreText}>{result.score}</Text>
+            <Text style={styles.scoreLabel}>{result.rating}</Text>
+          </View>
         </View>
         <OutfitCanvas items={todayItems} />
         <PrimaryButton label="Open Outfit Builder" icon="color-wand-outline" onPress={onOpenBuilder} />
@@ -100,9 +88,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 28,
-    gap: 18,
+    gap: 16,
   },
   header: {
     flexDirection: "row",
@@ -119,44 +107,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  hero: {
-    alignItems: "center",
-    gap: 12,
-    padding: 22,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  appTile: {
-    width: 112,
-    height: 112,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  cream: { color: colors.cream },
-  sage: { color: colors.sage },
-  tagline: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
   wardrobeCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderRadius: 26,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceElevated,
-    padding: 18,
+    padding: 16,
   },
   kicker: {
     color: colors.gold,
@@ -166,7 +125,7 @@ const styles = StyleSheet.create({
   },
   count: {
     color: colors.text,
-    fontSize: 42,
+    fontSize: 40,
     fontWeight: "800",
   },
   muted: {
@@ -205,7 +164,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: 10,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -223,7 +182,7 @@ const styles = StyleSheet.create({
   },
   pickCard: {
     gap: 14,
-    borderRadius: 28,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -240,5 +199,25 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: "800",
     marginTop: 3,
+  },
+  scorePill: {
+    minWidth: 64,
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(158,165,111,0.16)",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  scoreText: {
+    color: colors.gold,
+    fontSize: 21,
+    fontWeight: "900",
+  },
+  scoreLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800",
   },
 });

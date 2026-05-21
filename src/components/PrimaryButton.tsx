@@ -21,12 +21,16 @@ export function PrimaryButton({ label, icon, onPress }: Props) {
 const styles = StyleSheet.create({
   button: {
     minHeight: 52,
-    borderRadius: 26,
+    borderRadius: 13,
     backgroundColor: colors.gold,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
   label: {
     color: colors.background,

@@ -2,7 +2,6 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { OutfitCanvas } from "./OutfitCanvas";
-import { ScoreBadge } from "./ScoreBadge";
 import { Outfit } from "../models/outfit";
 import { colors } from "../theme/colors";
 
@@ -23,7 +22,9 @@ export function OutfitCard({ outfit, onPress }: Props) {
         ) : null}
       </View>
       <Text style={styles.name}>{outfit.name}</Text>
-      <ScoreBadge score={outfit.score} rating={outfit.rating} />
+      <Text style={styles.meta}>
+        {outfit.score} harmony · {outfit.rating}
+      </Text>
     </Pressable>
   );
 }
@@ -31,17 +32,17 @@ export function OutfitCard({ outfit, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    gap: 10,
-    padding: 10,
-    borderRadius: 22,
+    gap: 8,
+    padding: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   canvasWrap: {
-    height: 160,
+    height: 142,
     overflow: "hidden",
-    borderRadius: 18,
+    borderRadius: 9,
   },
   favorite: {
     position: "absolute",
@@ -56,7 +57,12 @@ const styles = StyleSheet.create({
   },
   name: {
     color: colors.text,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
+  },
+  meta: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
   },
 });

@@ -87,11 +87,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 38,
-    gap: 16,
+    gap: 14,
   },
   floating: {
-    marginTop: -42,
+    marginTop: -34,
   },
 });

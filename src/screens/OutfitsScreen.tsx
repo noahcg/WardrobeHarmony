@@ -67,7 +67,7 @@ export function OutfitsScreen({ wardrobe, savedOutfits, onOpenBuilder, onOpenOut
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, padding: 18, gap: 14 },
+  screen: { flex: 1, backgroundColor: colors.background, padding: 16, gap: 13 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   title: { color: colors.text, fontSize: 30, fontWeight: "800" },
   addButton: {
@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  grid: { gap: 12, paddingBottom: 28 },
-  row: { gap: 12, marginBottom: 12 },
+  grid: { gap: 10, paddingBottom: 28 },
+  row: { gap: 10, marginBottom: 10 },
 });
