@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "WardrobeHarmony",
+    "slug": "wardrobe-harmony",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#050B0E"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#050B0E"
+      }
+    }
+  }
+}

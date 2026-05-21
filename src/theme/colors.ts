@@ -1,0 +1,42 @@
+import { ColorFamily } from "../models/clothing";
+
+export const colors = {
+  background: "#050B0E",
+  surface: "#0B1115",
+  surfaceElevated: "#11181D",
+  surfaceSoft: "#172027",
+  border: "rgba(214, 196, 139, 0.28)",
+  borderStrong: "rgba(214, 196, 139, 0.46)",
+  text: "#F7F2E8",
+  textMuted: "#AFAAA0",
+  textDim: "#736F68",
+  sage: "#9EA56F",
+  sageDark: "#737A50",
+  gold: "#C7A24A",
+  tan: "#9A6A32",
+  cream: "#EFE7D8",
+  navy: "#101925",
+  amber: "#D79C45",
+  danger: "#B96E5B",
+  black: "#030506",
+};
+
+export const colorFamilyHex: Record<ColorFamily, string> = {
+  black: "#101010",
+  white: "#F5F0E6",
+  gray: "#888A86",
+  navy: "#17233A",
+  blue: "#7FA5C7",
+  brown: "#714B30",
+  tan: "#B48A5E",
+  cream: "#EFE2C9",
+  green: "#55745E",
+  olive: "#687246",
+  sage: "#9EA56F",
+  red: "#A7443F",
+  burgundy: "#6F2638",
+  pink: "#C98796",
+  purple: "#67507D",
+  yellow: "#D5B351",
+  orange: "#C4763F",
+};
