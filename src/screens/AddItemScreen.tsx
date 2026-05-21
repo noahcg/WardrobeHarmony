@@ -9,6 +9,7 @@ import { ColorSwatchRow } from "../components/ColorSwatchRow";
 import { FilterChip } from "../components/FilterChip";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { SegmentedControl } from "../components/SegmentedControl";
+import { detectGarmentColor, DetectedGarmentColor } from "../lib/colorExtraction";
 import { persistItemImage } from "../storage/wardrobeStore";
 import { ClothingCategory, ClothingItem, ColorFamily, Formality, Pattern, Saturation, Tone } from "../models/clothing";
 import { colors } from "../theme/colors";
@@ -37,6 +38,8 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
   const [formality, setFormality] = useState<Formality>(editingItem?.formality ?? "smart-casual");
   const [pattern, setPattern] = useState<Pattern>(editingItem?.pattern ?? "solid");
   const [isSaving, setIsSaving] = useState(false);
+  const [detectedColor, setDetectedColor] = useState<DetectedGarmentColor>();
+  const [isDetectingColor, setIsDetectingColor] = useState(false);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -51,7 +54,7 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
       quality: 0.9,
     });
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      await useSelectedImage(result.assets[0].uri);
     }
   };
 
@@ -68,7 +71,24 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
       quality: 0.9,
     });
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      await useSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  const useSelectedImage = async (uri: string) => {
+    setImageUri(uri);
+    setIsDetectingColor(true);
+    try {
+      const detection = await detectGarmentColor(uri);
+      setDetectedColor(detection);
+      setColorFamily(detection.colorFamily);
+      setTone(detection.tone);
+      setSaturation(detection.saturation);
+    } catch (error) {
+      console.warn("Could not detect garment color", error);
+      Alert.alert("Color detection failed", "The photo was added, but color can be corrected manually.");
+    } finally {
+      setIsDetectingColor(false);
     }
   };
 
@@ -97,8 +117,12 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
         pattern,
         seasons: editingItem?.seasons ?? ["all-season"],
         imageUrl: savedImage,
-        confidence: "high",
-        notes: editingItem?.notes ?? "Added from your iPhone. Color and clothing details are editable metadata.",
+        confidence: detectedColor?.confidence ?? editingItem?.confidence ?? "medium",
+        notes:
+          editingItem?.notes ??
+          (detectedColor
+            ? `Color detected from photo as ${detectedColor.colorName} (${detectedColor.confidence} confidence).`
+            : "Added from your iPhone. Color and clothing details are editable metadata."),
         tags: editingItem?.tags ?? ["user-added"],
       });
     } catch (error) {
@@ -162,7 +186,13 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
             <ColorSwatch color={colorFamily} size={52} selected />
             <View>
               <Text style={styles.title}>{label(colorFamily)}</Text>
-              <Text style={styles.muted}>Manual color family</Text>
+              <Text style={styles.muted}>
+                {isDetectingColor
+                  ? "Detecting from photo..."
+                  : detectedColor
+                    ? `Detected ${detectedColor.confidence} confidence · ${detectedColor.hex}`
+                    : "Detected from photo or manually corrected"}
+              </Text>
             </View>
           </View>
           <ColorSwatchRow colors={colorOptions} selected={colorFamily} />
