@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ColorSwatch } from "./ColorSwatch";
 import { ClothingItem } from "../models/clothing";
@@ -24,8 +24,14 @@ export function ClothingCard({ item, selected = false, compact = false, onPress 
   return (
     <Pressable style={[styles.card, selected && styles.selected, compact && styles.compactCard]} onPress={onPress}>
       <View style={[styles.image, { backgroundColor: colorFamilyHex[item.colorFamily] }]}>
-        <View style={styles.sheen} />
-        <Ionicons name={categoryIcon[item.category]} size={compact ? 28 : 38} color="rgba(247,242,232,0.88)" />
+        {item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.photo} />
+        ) : (
+          <>
+            <View style={styles.sheen} />
+            <Ionicons name={categoryIcon[item.category]} size={compact ? 28 : 38} color="rgba(247,242,232,0.88)" />
+          </>
+        )}
       </View>
       <View style={styles.meta}>
         <Text numberOfLines={2} style={styles.name}>
@@ -65,6 +71,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   sheen: {
     position: "absolute",

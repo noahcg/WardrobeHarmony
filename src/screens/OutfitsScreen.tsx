@@ -4,29 +4,34 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { OutfitCard } from "../components/OutfitCard";
 import { SegmentedControl } from "../components/SegmentedControl";
-import { mockWardrobe } from "../data/mockWardrobe";
 import { evaluateCompatibility } from "../lib/matchingEngine";
+import { ClothingItem } from "../models/clothing";
 import { Outfit } from "../models/outfit";
 import { colors } from "../theme/colors";
 
 type Props = {
+  wardrobe: ClothingItem[];
   onOpenBuilder: () => void;
 };
 
-export function OutfitsScreen({ onOpenBuilder }: Props) {
+export function OutfitsScreen({ wardrobe, onOpenBuilder }: Props) {
   const [filter, setFilter] = useState<"all" | "favorites" | "recent">("all");
   const outfits = useMemo<Outfit[]>(() => {
+    const tops = wardrobe.filter((item) => item.category === "top");
+    const bottoms = wardrobe.filter((item) => item.category === "bottom");
+    const shoes = wardrobe.filter((item) => item.category === "shoes");
+    const outerwear = wardrobe.filter((item) => item.category === "outerwear");
     const sets = [
-      { id: "sage-office", name: "Soft Office", items: [mockWardrobe[0], mockWardrobe[1], mockWardrobe[7]] },
-      { id: "cream-denim", name: "Cream Denim", items: [mockWardrobe[6], mockWardrobe[5], mockWardrobe[8]] },
-      { id: "blazer-blue", name: "Navy Blazer", items: [mockWardrobe[10], mockWardrobe[1], mockWardrobe[13], mockWardrobe[7]] },
-      { id: "fall-layer", name: "Fall Layer", items: [mockWardrobe[9], mockWardrobe[11], mockWardrobe[12]] },
-    ];
+      { id: "first-saved", name: "Saved Foundation", items: [tops[0], bottoms[0], shoes[0]].filter(Boolean) as ClothingItem[] },
+      { id: "soft-layer", name: "Soft Layer", items: [tops[1] ?? tops[0], bottoms[0], outerwear[0], shoes[0]].filter(Boolean) as ClothingItem[] },
+      { id: "weekend", name: "Weekend Mix", items: [tops[2] ?? tops[0], bottoms[1] ?? bottoms[0], shoes[1] ?? shoes[0]].filter(Boolean) as ClothingItem[] },
+      { id: "polished", name: "Polished Neutral", items: [tops[0], bottoms[0], outerwear[1] ?? outerwear[0], shoes[0]].filter(Boolean) as ClothingItem[] },
+    ].filter((set) => set.items.length > 0);
     return sets.map((set) => {
       const result = evaluateCompatibility(set.items);
       return { ...set, score: result.score, rating: result.rating, reasons: result.reasons, warnings: result.warnings };
     });
-  }, []);
+  }, [wardrobe]);
 
   return (
     <View style={styles.screen}>

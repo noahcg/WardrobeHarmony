@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 
 import { BottomTab, BottomTabBar } from "./src/components/BottomTabBar";
@@ -13,6 +13,7 @@ import { HomeScreen } from "./src/screens/HomeScreen";
 import { ItemDetailsScreen } from "./src/screens/ItemDetailsScreen";
 import { OutfitBuilderScreen } from "./src/screens/OutfitBuilderScreen";
 import { OutfitsScreen } from "./src/screens/OutfitsScreen";
+import { loadWardrobe, saveWardrobe } from "./src/storage/wardrobeStore";
 import { colors } from "./src/theme/colors";
 
 type Screen =
@@ -25,6 +26,7 @@ type Screen =
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [activeTab, setActiveTab] = useState<BottomTab>("home");
+  const [wardrobe, setWardrobe] = useState<ClothingItem[]>(mockWardrobe);
   const [selectedItem, setSelectedItem] = useState<ClothingItem>(mockWardrobe[0]);
   const [builderSeed, setBuilderSeed] = useState<ClothingItem[]>([
     mockWardrobe[0],
@@ -32,12 +34,43 @@ export default function App() {
     mockWardrobe[7],
   ]);
 
+  useEffect(() => {
+    let mounted = true;
+    loadWardrobe()
+      .then((items) => {
+        if (!mounted) return;
+        setWardrobe(items);
+        setSelectedItem(items[0] ?? mockWardrobe[0]);
+        setBuilderSeed(getDefaultBuilderSeed(items));
+      })
+      .catch((error) => {
+        console.warn("Could not load wardrobe", error);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const persistWardrobe = async (items: ClothingItem[]) => {
+    setWardrobe(items);
+    await saveWardrobe(items);
+  };
+
+  const addItem = async (item: ClothingItem) => {
+    const nextWardrobe = [item, ...wardrobe];
+    await persistWardrobe(nextWardrobe);
+    setSelectedItem(item);
+    setActiveTab("closet");
+    setScreen("closet");
+  };
+
   const showTabs = ["home", "closet", "add", "outfits", "profile"].includes(screen);
   const route = useMemo(() => {
     switch (screen) {
       case "home":
         return (
           <HomeScreen
+            wardrobe={wardrobe}
             onOpenBuilder={() => setScreen("builder")}
             onOpenColorGuide={() => setScreen("colorGuide")}
           />
@@ -45,6 +78,7 @@ export default function App() {
       case "closet":
         return (
           <ClosetScreen
+            wardrobe={wardrobe}
             onOpenItem={(item) => {
               setSelectedItem(item);
               setScreen("itemDetails");
@@ -56,9 +90,9 @@ export default function App() {
           />
         );
       case "add":
-        return <AddItemScreen onOpenLink={() => setScreen("addLink")} />;
+        return <AddItemScreen onOpenLink={() => setScreen("addLink")} onClose={() => setScreen(activeTab)} onSave={addItem} />;
       case "outfits":
-        return <OutfitsScreen onOpenBuilder={() => setScreen("builder")} />;
+        return <OutfitsScreen wardrobe={wardrobe} onOpenBuilder={() => setScreen("builder")} />;
       case "profile":
         return <ColorGuideScreen item={selectedItem} onBack={() => setScreen("home")} />;
       case "itemDetails":
@@ -72,6 +106,7 @@ export default function App() {
       case "builder":
         return (
           <OutfitBuilderScreen
+            wardrobe={wardrobe}
             initialItems={builderSeed}
             onClose={() => setScreen(activeTab)}
             onOpenColorGuide={(item) => {
@@ -87,7 +122,7 @@ export default function App() {
       default:
         return null;
     }
-  }, [activeTab, builderSeed, screen, selectedItem]);
+  }, [activeTab, builderSeed, screen, selectedItem, wardrobe]);
 
   const handleTabPress = (tab: BottomTab) => {
     setActiveTab(tab);
@@ -101,6 +136,13 @@ export default function App() {
       {showTabs ? <BottomTabBar activeTab={activeTab} onTabPress={handleTabPress} /> : null}
     </SafeAreaView>
   );
+}
+
+function getDefaultBuilderSeed(items: ClothingItem[]) {
+  const top = items.find((item) => item.category === "top");
+  const bottom = items.find((item) => item.category === "bottom");
+  const shoes = items.find((item) => item.category === "shoes");
+  return [top, bottom, shoes].filter(Boolean) as ClothingItem[];
 }
 
 const styles = StyleSheet.create({

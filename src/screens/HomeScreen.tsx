@@ -8,23 +8,23 @@ import { OutfitCanvas } from "../components/OutfitCanvas";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ScoreBadge } from "../components/ScoreBadge";
 import { evaluateCompatibility } from "../lib/matchingEngine";
-import { mockWardrobe } from "../data/mockWardrobe";
-import { ClothingCategory } from "../models/clothing";
+import { ClothingCategory, ClothingItem } from "../models/clothing";
 import { colors } from "../theme/colors";
 
 type Props = {
+  wardrobe: ClothingItem[];
   onOpenBuilder: () => void;
   onOpenColorGuide: () => void;
 };
 
 const categoryOrder: ClothingCategory[] = ["top", "bottom", "outerwear", "shoes", "accessory"];
-const todayItems = [mockWardrobe[0], mockWardrobe[1], mockWardrobe[7]];
 
-export function HomeScreen({ onOpenBuilder, onOpenColorGuide }: Props) {
+export function HomeScreen({ wardrobe, onOpenBuilder, onOpenColorGuide }: Props) {
+  const todayItems = getTodayItems(wardrobe);
   const result = evaluateCompatibility(todayItems);
   const counts = categoryOrder.map((category) => ({
     category,
-    count: mockWardrobe.filter((item) => item.category === category).length,
+    count: wardrobe.filter((item) => item.category === category).length,
   }));
 
   return (
@@ -51,13 +51,13 @@ export function HomeScreen({ onOpenBuilder, onOpenColorGuide }: Props) {
       <View style={styles.wardrobeCard}>
         <View>
           <Text style={styles.kicker}>Your Wardrobe</Text>
-          <Text style={styles.count}>128</Text>
+          <Text style={styles.count}>{wardrobe.length}</Text>
           <Text style={styles.muted}>items organized by color, role, and season</Text>
         </View>
         <View style={styles.donut}>
           <View style={styles.donutInner}>
-            <Text style={styles.donutNumber}>{mockWardrobe.length}</Text>
-            <Text style={styles.donutLabel}>mock</Text>
+            <Text style={styles.donutNumber}>{wardrobe.length}</Text>
+            <Text style={styles.donutLabel}>saved</Text>
           </View>
         </View>
       </View>
@@ -75,7 +75,7 @@ export function HomeScreen({ onOpenBuilder, onOpenColorGuide }: Props) {
         <View style={styles.pickHeader}>
           <View>
             <Text style={styles.kicker}>Today's Pick</Text>
-            <Text style={styles.pickTitle}>Sage, navy, cognac</Text>
+            <Text style={styles.pickTitle}>{todayItems.map((item) => item.colorFamily).join(", ")}</Text>
             <Text style={styles.muted}>Cool, 68°F</Text>
           </View>
           <ScoreBadge score={result.score} rating={result.rating} />
@@ -85,6 +85,13 @@ export function HomeScreen({ onOpenBuilder, onOpenColorGuide }: Props) {
       </View>
     </ScrollView>
   );
+}
+
+function getTodayItems(wardrobe: ClothingItem[]) {
+  const top = wardrobe.find((item) => item.category === "top");
+  const bottom = wardrobe.find((item) => item.category === "bottom");
+  const shoes = wardrobe.find((item) => item.category === "shoes");
+  return [top, bottom, shoes].filter(Boolean) as ClothingItem[];
 }
 
 const styles = StyleSheet.create({

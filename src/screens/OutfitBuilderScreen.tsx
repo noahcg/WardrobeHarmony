@@ -8,21 +8,21 @@ import { ItemPicker } from "../components/ItemPicker";
 import { OutfitCanvas } from "../components/OutfitCanvas";
 import { ScoreBadge } from "../components/ScoreBadge";
 import { SuggestedSwaps } from "../components/SuggestedSwaps";
-import { mockWardrobe } from "../data/mockWardrobe";
 import { evaluateCompatibility, findSuggestedSwaps } from "../lib/matchingEngine";
 import { ClothingItem } from "../models/clothing";
 import { colors } from "../theme/colors";
 
 type Props = {
+  wardrobe: ClothingItem[];
   initialItems: ClothingItem[];
   onClose: () => void;
   onOpenColorGuide: (item: ClothingItem) => void;
 };
 
-export function OutfitBuilderScreen({ initialItems, onClose, onOpenColorGuide }: Props) {
+export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onOpenColorGuide }: Props) {
   const [items, setItems] = useState<ClothingItem[]>(initialItems);
   const result = useMemo(() => evaluateCompatibility(items), [items]);
-  const swaps = useMemo(() => findSuggestedSwaps(items, mockWardrobe), [items]);
+  const swaps = useMemo(() => findSuggestedSwaps(items, wardrobe), [items, wardrobe]);
 
   const toggleItem = (item: ClothingItem) => {
     setItems((current) => {
@@ -51,18 +51,25 @@ export function OutfitBuilderScreen({ initialItems, onClose, onOpenColorGuide }:
             actions={[
               { icon: "add" },
               { icon: "color-palette-outline", onPress: () => items[0] && onOpenColorGuide(items[0]) },
-              { icon: "shuffle-outline", onPress: () => setItems([mockWardrobe[2], mockWardrobe[5], mockWardrobe[8]]) },
+              { icon: "shuffle-outline", onPress: () => setItems(getShuffleOutfit(wardrobe)) },
               { icon: "heart-outline" },
             ]}
           />
         </View>
         <ScoreBadge score={result.score} rating={result.rating} />
         <CompatibilityExplanation result={result} />
-        <ItemPicker items={mockWardrobe} selectedItems={items} onToggle={toggleItem} />
+        <ItemPicker items={wardrobe} selectedItems={items} onToggle={toggleItem} />
         <SuggestedSwaps swaps={swaps} onSelect={selectSwap} />
       </ScrollView>
     </View>
   );
+}
+
+function getShuffleOutfit(wardrobe: ClothingItem[]) {
+  const top = wardrobe.filter((item) => item.category === "top").at(1) ?? wardrobe.find((item) => item.category === "top");
+  const bottom = wardrobe.filter((item) => item.category === "bottom").at(1) ?? wardrobe.find((item) => item.category === "bottom");
+  const shoes = wardrobe.filter((item) => item.category === "shoes").at(1) ?? wardrobe.find((item) => item.category === "shoes");
+  return [top, bottom, shoes].filter(Boolean) as ClothingItem[];
 }
 
 const styles = StyleSheet.create({

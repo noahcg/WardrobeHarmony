@@ -4,13 +4,13 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-na
 
 import { ClothingCard } from "../components/ClothingCard";
 import { FilterChip } from "../components/FilterChip";
-import { mockWardrobe } from "../data/mockWardrobe";
 import { ClothingCategory, ClothingItem } from "../models/clothing";
 import { colors } from "../theme/colors";
 
 type Filter = "all" | ClothingCategory;
 
 type Props = {
+  wardrobe: ClothingItem[];
   onOpenItem: (item: ClothingItem) => void;
   onBuild: (items: ClothingItem[]) => void;
 };
@@ -22,23 +22,29 @@ const filters: { key: Filter; label: string }[] = [
   { key: "outerwear", label: "Outerwear" },
 ];
 
-export function ClosetScreen({ onOpenItem, onBuild }: Props) {
+export function ClosetScreen({ wardrobe, onOpenItem, onBuild }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
   const items = useMemo(() => {
-    return mockWardrobe.filter((item) => {
+    return wardrobe.filter((item) => {
       const matchesFilter = filter === "all" || item.category === filter;
       const matchesQuery = item.name.toLowerCase().includes(query.toLowerCase());
       return matchesFilter && matchesQuery;
     });
-  }, [filter, query]);
+  }, [filter, query, wardrobe]);
+
+  const starterOutfit = [
+    wardrobe.find((item) => item.category === "top"),
+    wardrobe.find((item) => item.category === "bottom"),
+    wardrobe.find((item) => item.category === "shoes"),
+  ].filter(Boolean) as ClothingItem[];
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Closet</Text>
-        <Pressable style={styles.iconButton} onPress={() => onBuild([mockWardrobe[0], mockWardrobe[1], mockWardrobe[8]])}>
+        <Pressable style={styles.iconButton} onPress={() => onBuild(starterOutfit)}>
           <Ionicons name="options-outline" size={20} color={colors.text} />
         </Pressable>
       </View>

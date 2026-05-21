@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 import { ClothingItem } from "../models/clothing";
 import { colorFamilyHex, colors } from "../theme/colors";
@@ -40,7 +40,11 @@ export function OutfitCanvas({ items }: Props) {
             item.category === "accessory" && styles.accessory,
           ]}
         >
-          <Ionicons name={icon[item.category]} size={item.category === "accessory" ? 24 : 40} color="rgba(247,242,232,0.88)" />
+          {item.imageUrl ? (
+            <Image source={{ uri: item.imageUrl }} style={styles.photo} />
+          ) : (
+            <Ionicons name={icon[item.category]} size={item.category === "accessory" ? 24 : 40} color="rgba(247,242,232,0.88)" />
+          )}
         </View>
       ))}
     </View>
@@ -78,6 +82,12 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 10,
+    overflow: "hidden",
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   bottom: {
     width: 92,

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { AppHeader } from "../components/AppHeader";
 import { ColorSwatch } from "../components/ColorSwatch";
@@ -18,9 +18,9 @@ export function ItemDetailsScreen({ item, onBack, onOpenColorGuide }: Props) {
   return (
     <View style={styles.screen}>
       <AppHeader title="Item Details" leftIcon="chevron-back" rightIcon="ellipsis-horizontal" onLeftPress={onBack} />
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.image, { backgroundColor: colorFamilyHex[item.colorFamily] }]}>
-          <Ionicons name="shirt-outline" size={96} color={colors.cream} />
+          {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.photo} /> : <Ionicons name="shirt-outline" size={96} color={colors.cream} />}
           <View style={styles.edit}>
             <Ionicons name="create-outline" size={20} color={colors.background} />
           </View>
@@ -59,7 +59,7 @@ export function ItemDetailsScreen({ item, onBack, onOpenColorGuide }: Props) {
             { icon: "ellipsis-horizontal" },
           ]}
         />
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -74,6 +74,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.borderStrong,
+    overflow: "hidden",
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   edit: {
     position: "absolute",
