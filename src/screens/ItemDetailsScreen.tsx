@@ -210,10 +210,12 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
+    marginTop: 8,
     backgroundColor: "rgba(239,231,216,0.08)",
   },
   section: {
-    paddingTop: 13,
+    paddingTop: 18,
+    paddingBottom: 8,
   },
   sectionTitle: {
     color: colors.text,

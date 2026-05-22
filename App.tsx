@@ -163,7 +163,7 @@ export default function App() {
             }}
           >
             <RootStack.Screen name="MainTabs" component={MainTabs} />
-            <RootStack.Screen name="AddItem" component={AddItemRoute} options={{ presentation: "modal" }} />
+            <RootStack.Screen name="AddItem" component={AddItemRoute} />
             <RootStack.Screen name="AddFromLink" component={AddFromLinkRoute} options={{ presentation: "modal" }} />
             <RootStack.Screen name="ItemDetails" component={ItemDetailsRoute} />
             <RootStack.Screen name="OutfitBuilder" component={OutfitBuilderRoute} />
