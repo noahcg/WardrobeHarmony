@@ -166,7 +166,7 @@ export default function App() {
             <RootStack.Screen name="AddItem" component={AddItemRoute} options={{ presentation: "modal" }} />
             <RootStack.Screen name="AddFromLink" component={AddFromLinkRoute} options={{ presentation: "modal" }} />
             <RootStack.Screen name="ItemDetails" component={ItemDetailsRoute} />
-            <RootStack.Screen name="OutfitBuilder" component={OutfitBuilderRoute} options={{ presentation: "modal" }} />
+            <RootStack.Screen name="OutfitBuilder" component={OutfitBuilderRoute} />
             <RootStack.Screen name="ColorGuide" component={ColorGuideRoute} />
           </RootStack.Navigator>
         </NavigationContainer>

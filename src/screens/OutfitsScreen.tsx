@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { EmptyState } from "../components/EmptyState";
 import { OutfitCard } from "../components/OutfitCard";
@@ -41,33 +42,36 @@ export function OutfitsScreen({ wardrobe, savedOutfits, onOpenBuilder, onOpenOut
   }, [filter, savedOutfits, wardrobe]);
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Outfits</Text>
-        <Pressable style={styles.addButton} onPress={onOpenBuilder}>
-          <Ionicons name="add" size={24} color={colors.background} />
-        </Pressable>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Outfits</Text>
+          <Pressable style={styles.addButton} onPress={onOpenBuilder}>
+            <Ionicons name="add" size={24} color={colors.background} />
+          </Pressable>
+        </View>
+        <SegmentedControl options={["all", "favorites", "recent"]} value={filter} onChange={setFilter} />
+        <FlatList
+          data={outfits}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.grid}
+          renderItem={({ item }) => {
+            const saved = savedOutfits.find((outfit) => outfit.id === item.id);
+            return <OutfitCard outfit={item} onPress={() => (saved ? onOpenOutfit(saved) : onOpenBuilder())} />;
+          }}
+          ListEmptyComponent={<EmptyState title="No saved outfits" message="Build and save an outfit to start your outfit library." />}
+          showsVerticalScrollIndicator={false}
+        />
       </View>
-      <SegmentedControl options={["all", "favorites", "recent"]} value={filter} onChange={setFilter} />
-      <FlatList
-        data={outfits}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.grid}
-        renderItem={({ item }) => {
-          const saved = savedOutfits.find((outfit) => outfit.id === item.id);
-          return <OutfitCard outfit={item} onPress={() => (saved ? onOpenOutfit(saved) : onOpenBuilder())} />;
-        }}
-        ListEmptyComponent={<EmptyState title="No saved outfits" message="Build and save an outfit to start your outfit library." />}
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, padding: 16, gap: 13 },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 16, paddingTop: 8, gap: 13 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   title: { color: colors.text, fontSize: 30, fontWeight: "800" },
   addButton: {

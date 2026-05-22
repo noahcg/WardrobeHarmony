@@ -202,10 +202,8 @@ const styles = StyleSheet.create({
   },
   canvas: {
     height: 286,
-    borderRadius: 10,
+    borderRadius: 0,
     backgroundColor: "#050B0E",
-    borderWidth: 1,
-    borderColor: "rgba(191,169,124,0.08)",
     overflow: "hidden",
   },
   canvasPiece: {
