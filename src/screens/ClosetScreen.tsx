@@ -1,12 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ClothingCard } from "../components/ClothingCard";
 import { EmptyState } from "../components/EmptyState";
-import { FilterChip } from "../components/FilterChip";
 import { ClothingCategory, ClothingItem } from "../models/clothing";
-import { colors } from "../theme/colors";
+import { colorFamilyHex, colors } from "../theme/colors";
 
 type Filter = "all" | ClothingCategory;
 
@@ -42,96 +41,232 @@ export function ClosetScreen({ wardrobe, onOpenItem, onBuild }: Props) {
   ].filter(Boolean) as ClothingItem[];
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+      <View style={styles.screen}>
         <Text style={styles.title}>Closet</Text>
-        <Pressable style={styles.iconButton} onPress={() => onBuild(starterOutfit)}>
-          <Ionicons name="options-outline" size={20} color={colors.text} />
-        </Pressable>
-      </View>
-      <View style={styles.search}>
-        <Ionicons name="search-outline" size={18} color={colors.textMuted} />
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search wardrobe"
-          placeholderTextColor={colors.textDim}
-          style={styles.input}
+
+        <View style={styles.search}>
+          <Ionicons name="search-outline" size={15} color={colors.textMuted} />
+          <TextInput value={query} onChangeText={setQuery} placeholder="Search" placeholderTextColor={colors.textDim} style={styles.input} />
+        </View>
+
+        <View style={styles.filterRow}>
+          <View style={styles.filters}>
+            {filters.map((entry) => (
+              <Pressable key={entry.key} style={[styles.chip, filter === entry.key && styles.activeChip]} onPress={() => setFilter(entry.key)}>
+                <Text style={[styles.chipText, filter === entry.key && styles.activeChipText]}>{entry.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Pressable style={styles.filterIcon} onPress={() => onBuild(starterOutfit)}>
+            <Ionicons name="filter-outline" size={22} color={colors.cream} />
+          </Pressable>
+        </View>
+
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          columnWrapperStyle={styles.gridRow}
+          contentContainerStyle={styles.grid}
+          renderItem={({ item }) => <ClosetGridItem item={item} onPress={() => onOpenItem(item)} />}
+          ListEmptyComponent={<EmptyState title="No items found" message="Adjust the filter or add a new clothing item to your wardrobe." />}
+          showsVerticalScrollIndicator={false}
         />
       </View>
-      <View style={styles.filters}>
-        {filters.map((entry) => (
-          <FilterChip key={entry.key} label={entry.label} active={filter === entry.key} onPress={() => setFilter(entry.key)} />
-        ))}
-      </View>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.gridRow}
-        contentContainerStyle={styles.grid}
-        renderItem={({ item }) => <ClothingCard item={item} onPress={() => onOpenItem(item)} />}
-        ListEmptyComponent={<EmptyState title="No items found" message="Adjust the filter or add a new clothing item to your wardrobe." />}
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+    </SafeAreaView>
   );
 }
 
+function ClosetGridItem({ item, onPress }: { item: ClothingItem; onPress: () => void }) {
+  return (
+    <Pressable style={styles.itemWrap} onPress={onPress}>
+      <View style={styles.imageCard}>
+        {item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.photo} />
+        ) : (
+          <View style={[styles.garmentShape, { backgroundColor: colorFamilyHex[item.colorFamily] }, garmentShapeStyle(item.category)]}>
+            <Ionicons name={iconFor(item.category)} size={item.category === "shoes" ? 24 : 32} color="rgba(247,242,232,0.82)" />
+          </View>
+        )}
+      </View>
+      <Text numberOfLines={1} style={styles.itemName}>
+        {shortName(item)}
+      </Text>
+      <Text numberOfLines={1} style={styles.itemColor}>
+        {item.colorName ?? label(item.colorFamily)}
+      </Text>
+    </Pressable>
+  );
+}
+
+function iconFor(category: ClothingCategory) {
+  const icons: Record<ClothingCategory, keyof typeof Ionicons.glyphMap> = {
+    top: "shirt-outline",
+    bottom: "reorder-four-outline",
+    shoes: "footsteps-outline",
+    outerwear: "body-outline",
+    accessory: "watch-outline",
+  };
+  return icons[category];
+}
+
+function shortName(item: ClothingItem) {
+  return item.subcategory || item.name.replace(/\b(Sage|Green|Navy|White|Gray|Cream|Brown|Blue|Black|Tan|Burgundy)\b/gi, "").trim() || item.name;
+}
+
+function label(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function garmentShapeStyle(category: ClothingCategory) {
+  if (category === "bottom") return styles.garmentBottom;
+  if (category === "shoes") return styles.garmentShoe;
+  if (category === "accessory") return styles.garmentAccessory;
+  return null;
+}
+
 const styles = StyleSheet.create({
-  screen: {
+  safeArea: {
     flex: 1,
-    padding: 18,
-    gap: 14,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  screen: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    backgroundColor: colors.background,
   },
   title: {
     color: colors.text,
-    fontSize: 30,
+    fontSize: 26,
+    lineHeight: 31,
     fontWeight: "800",
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: 12,
   },
   search: {
+    height: 37,
+    borderRadius: 8,
+    paddingHorizontal: 11,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    height: 48,
-    borderRadius: 24,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: 8,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: "rgba(191,169,124,0.08)",
   },
   input: {
     flex: 1,
     color: colors.text,
-    fontSize: 15,
+    fontSize: 13,
+    paddingVertical: 0,
+  },
+  filterRow: {
+    marginTop: 12,
+    marginBottom: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
   },
   filters: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
+    gap: 7,
+    flexShrink: 1,
+  },
+  chip: {
+    height: 27,
+    paddingHorizontal: 13,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: "rgba(191,169,124,0.08)",
+  },
+  activeChip: {
+    backgroundColor: colors.cream,
+    borderColor: colors.cream,
+  },
+  chipText: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  activeChipText: {
+    color: colors.background,
+  },
+  filterIcon: {
+    width: 31,
+    height: 31,
+    alignItems: "center",
+    justifyContent: "center",
   },
   grid: {
-    gap: 12,
-    paddingBottom: 20,
+    paddingBottom: 18,
   },
   gridRow: {
-    gap: 12,
-    marginBottom: 12,
+    gap: 13,
+    marginBottom: 18,
+  },
+  itemWrap: {
+    flex: 1,
+    maxWidth: "31.8%",
+  },
+  imageCard: {
+    aspectRatio: 1,
+    borderRadius: 8,
+    backgroundColor: colors.productMat,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  garmentShape: {
+    width: "72%",
+    height: "78%",
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.26)",
+    shadowColor: "#000",
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 5 },
+  },
+  garmentBottom: {
+    width: "48%",
+    height: "82%",
+    borderRadius: 11,
+  },
+  garmentShoe: {
+    width: "78%",
+    height: "42%",
+    borderRadius: 15,
+  },
+  garmentAccessory: {
+    width: "58%",
+    height: "58%",
+    borderRadius: 22,
+  },
+  itemName: {
+    color: colors.text,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "800",
+    marginTop: 6,
+  },
+  itemColor: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "600",
   },
 });
