@@ -23,13 +23,25 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wardrobeharmony.app"
+      "bundleIdentifier": "com.wardrobeharmony.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.wardrobeharmony.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#050B0E"
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "adc0a674-58cd-44cb-9c98-daf6b8dc7087"
       }
     }
   }
