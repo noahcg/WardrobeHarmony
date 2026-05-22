@@ -55,7 +55,7 @@ export function HomeScreen({ wardrobe, firstName, weather, onUpdateFirstName, on
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.logoRow}>
-            <HangerLogo size={34} />
+            <HangerLogo size={26} />
             <Text style={styles.wordmark}>
               <Text style={styles.wordmarkCream}>Wardrobe</Text>
               <Text style={styles.wordmarkGold}>Harmony</Text>
