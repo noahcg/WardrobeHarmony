@@ -8,8 +8,11 @@ import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { mockWardrobe } from "./src/data/mockWardrobe";
+import { fetchCurrentWeather } from "./src/lib/weather";
 import { ClothingItem } from "./src/models/clothing";
 import { SavedOutfit } from "./src/models/outfit";
+import { UserProfile } from "./src/models/profile";
+import { CurrentWeather } from "./src/models/weather";
 import { AddFromLinkScreen } from "./src/screens/AddFromLinkScreen";
 import { AddItemScreen } from "./src/screens/AddItemScreen";
 import { ClosetScreen } from "./src/screens/ClosetScreen";
@@ -20,6 +23,7 @@ import { OutfitBuilderScreen } from "./src/screens/OutfitBuilderScreen";
 import { OutfitsScreen } from "./src/screens/OutfitsScreen";
 import { evaluateCompatibility } from "./src/lib/matchingEngine";
 import { loadSavedOutfits, saveOutfits } from "./src/storage/outfitStore";
+import { loadProfile, saveProfile } from "./src/storage/profileStore";
 import { deleteStoredImage, loadWardrobe, saveWardrobe } from "./src/storage/wardrobeStore";
 import { colors } from "./src/theme/colors";
 
@@ -44,9 +48,12 @@ type WardrobeContextValue = {
   wardrobe: ClothingItem[];
   selectedItem: ClothingItem;
   savedOutfits: SavedOutfit[];
+  profile: UserProfile;
+  weather?: CurrentWeather;
   addItem: (item: ClothingItem) => Promise<void>;
   updateItem: (item: ClothingItem) => Promise<void>;
   deleteItem: (item: ClothingItem) => Promise<void>;
+  updateProfile: (profile: UserProfile) => Promise<void>;
   saveOutfitFromItems: (items: ClothingItem[]) => Promise<SavedOutfit>;
   getSavedOutfit: (id?: string) => SavedOutfit | undefined;
   getItem: (id?: string) => ClothingItem;
@@ -60,6 +67,9 @@ export default function App() {
   const [wardrobe, setWardrobe] = useState<ClothingItem[]>(mockWardrobe);
   const [selectedItem, setSelectedItem] = useState<ClothingItem>(mockWardrobe[0]);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
+  const [profile, setProfile] = useState<UserProfile>({});
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [weather, setWeather] = useState<CurrentWeather | undefined>();
 
   useEffect(() => {
     let mounted = true;
@@ -80,10 +90,61 @@ export default function App() {
       .catch((error) => {
         console.warn("Could not load outfits", error);
       });
+    loadProfile()
+      .then((storedProfile) => {
+        if (!mounted) return;
+        setProfile(storedProfile);
+        setProfileLoaded(true);
+      })
+      .catch((error) => {
+        console.warn("Could not load profile", error);
+        setProfileLoaded(true);
+      });
+    fetchCurrentWeather()
+      .then((currentWeather) => {
+        if (!mounted || !currentWeather) return;
+        setWeather(currentWeather);
+      })
+      .catch((error) => {
+        console.warn("Could not load weather", error);
+      });
     return () => {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!profileLoaded || profile.firstName || profile.namePromptedAt) return;
+    Alert.prompt(
+      "Your first name",
+      "WardrobeHarmony uses this only on your device.",
+      [
+        {
+          text: "Skip",
+          style: "cancel",
+          onPress: () => {
+            persistProfile({ ...profile, namePromptedAt: new Date().toISOString() }).catch((error) => {
+              console.warn("Could not save profile prompt state", error);
+            });
+          },
+        },
+        {
+          text: "Save",
+          onPress: (value?: string) => {
+            const cleanValue = value?.trim();
+            persistProfile({
+              ...profile,
+              firstName: cleanValue || undefined,
+              namePromptedAt: new Date().toISOString(),
+            }).catch((error) => {
+              console.warn("Could not save profile", error);
+            });
+          },
+        },
+      ],
+      "plain-text",
+    );
+  }, [profile, profileLoaded]);
 
   const persistWardrobe = async (items: ClothingItem[]) => {
     setWardrobe(items);
@@ -95,6 +156,11 @@ export default function App() {
     await saveOutfits(outfits);
   };
 
+  const persistProfile = async (nextProfile: UserProfile) => {
+    setProfile(nextProfile);
+    await saveProfile(nextProfile);
+  };
+
   const value = useMemo<WardrobeContextValue>(() => {
     const getItem = (id?: string) => wardrobe.find((item) => item.id === id) ?? selectedItem ?? wardrobe[0] ?? mockWardrobe[0];
     const getSavedOutfit = (id?: string) => savedOutfits.find((outfit) => outfit.id === id);
@@ -103,8 +169,11 @@ export default function App() {
       wardrobe,
       selectedItem,
       savedOutfits,
+      profile,
+      weather,
       getItem,
       getSavedOutfit,
+      updateProfile: persistProfile,
       addItem: async (item) => {
         const nextWardrobe = [item, ...wardrobe];
         await persistWardrobe(nextWardrobe);
@@ -149,7 +218,7 @@ export default function App() {
         return outfit;
       },
     };
-  }, [savedOutfits, selectedItem, wardrobe]);
+  }, [profile, savedOutfits, selectedItem, wardrobe, weather]);
 
   return (
     <SafeAreaProvider>
@@ -210,10 +279,13 @@ function MainTabs() {
 }
 
 function HomeRoute({ navigation }: any) {
-  const { wardrobe } = useWardrobe();
+  const { profile, updateProfile, wardrobe, weather } = useWardrobe();
   return (
     <HomeScreen
       wardrobe={wardrobe}
+      firstName={profile.firstName}
+      weather={weather}
+      onUpdateFirstName={async (firstName) => updateProfile({ ...profile, firstName })}
       onOpenBuilder={() => navigation.navigate("OutfitBuilder")}
       onOpenColorGuide={() => navigation.navigate("ColorGuide")}
     />

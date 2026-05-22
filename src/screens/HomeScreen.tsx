@@ -1,27 +1,54 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { HangerLogo } from "../components/HangerLogo";
 import { evaluateCompatibility } from "../lib/matchingEngine";
 import { ClothingCategory, ClothingItem } from "../models/clothing";
+import { CurrentWeather } from "../models/weather";
 import { colorFamilyHex, colors } from "../theme/colors";
 
 type Props = {
   wardrobe: ClothingItem[];
+  firstName?: string;
+  weather?: CurrentWeather;
+  onUpdateFirstName: (firstName: string | undefined) => Promise<void>;
   onOpenBuilder: () => void;
   onOpenColorGuide: () => void;
 };
 
 const categoryOrder: ClothingCategory[] = ["top", "bottom", "outerwear", "shoes", "accessory"];
 
-export function HomeScreen({ wardrobe, onOpenBuilder, onOpenColorGuide }: Props) {
+export function HomeScreen({ wardrobe, firstName, weather, onUpdateFirstName, onOpenBuilder, onOpenColorGuide }: Props) {
   const todayItems = getTodayItems(wardrobe);
   const result = evaluateCompatibility(todayItems);
+  const trimmedName = firstName?.trim();
+  const weatherLine = formatWeatherLine(weather);
   const counts = categoryOrder.map((category) => ({
     category,
     count: wardrobe.filter((item) => item.category === category).length,
   }));
+
+  const editFirstName = () => {
+    Alert.prompt(
+      "Your first name",
+      "WardrobeHarmony uses this only on your device.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Save",
+          onPress: (value?: string) => {
+            const cleanValue = value?.trim();
+            onUpdateFirstName(cleanValue || undefined).catch((error) => {
+              console.warn("Could not save profile", error);
+            });
+          },
+        },
+      ],
+      "plain-text",
+      trimmedName ?? "",
+    );
+  };
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
@@ -39,19 +66,19 @@ export function HomeScreen({ wardrobe, onOpenBuilder, onOpenColorGuide }: Props)
           </Pressable>
         </View>
 
-        <View style={styles.greetingRow}>
+        <Pressable style={styles.greetingRow} onPress={editFirstName}>
           <Ionicons name="sunny-outline" size={24} color={colors.gold} />
           <View>
-            <Text style={styles.greeting}>Good morning, Alex</Text>
-            <Text style={styles.greetingSub}>Let's build your best outfit.</Text>
+            <Text style={styles.greeting}>{trimmedName ? `Good morning, ${trimmedName}` : "Good morning"}</Text>
+            <Text style={styles.greetingSub}>{trimmedName ? "Let's build your best outfit." : "Add your name for a personal home screen."}</Text>
           </View>
-        </View>
+        </Pressable>
 
         <Pressable style={styles.todayCard} onPress={onOpenBuilder}>
           <View style={styles.sectionHeader}>
             <View>
               <Text style={styles.sectionTitle}>Today's Pick</Text>
-              <Text style={styles.sectionSub}>Cool, 68°F</Text>
+              <Text style={styles.sectionSub}>{weatherLine}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.cream} />
           </View>
@@ -143,6 +170,11 @@ function getTodayItems(wardrobe: ClothingItem[]) {
   const shoes = wardrobe.find((item) => item.category === "shoes");
   const accessory = wardrobe.find((item) => item.category === "accessory");
   return [top, bottom, shoes, accessory].filter(Boolean) as ClothingItem[];
+}
+
+function formatWeatherLine(weather?: CurrentWeather) {
+  if (!weather) return "Local weather pending";
+  return `${weather.condition}, ${weather.temperatureF}°F`;
 }
 
 function iconFor(category: ClothingCategory) {

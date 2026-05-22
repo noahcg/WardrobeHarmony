@@ -11,6 +11,14 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "WardrobeHarmony uses your location to show local weather for outfit planning."
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true
     },
