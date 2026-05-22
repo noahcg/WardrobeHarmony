@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppHeader } from "../components/AppHeader";
 import { ColorGuideWheel } from "../components/ColorGuideWheel";
@@ -20,32 +21,35 @@ export function ColorGuideScreen({ item, onBack }: Props) {
   const good = getGoodOptions(item.colorFamily);
 
   return (
-    <View style={styles.screen}>
-      <AppHeader title="Color Guide" leftIcon="chevron-back" onLeftPress={onBack} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SegmentedControl options={["matches", "avoid", "neutrals"]} value={mode} onChange={setMode} />
-        <View style={styles.wheelCard}>
-          <ColorGuideWheel selected={item.colorFamily} colorsList={["cream", "sage", "olive", "tan", "brown", "navy", "gray", "white"]} />
-          <Text style={styles.title}>{item.colorName ?? item.colorFamily}</Text>
-          <Text style={styles.muted}>Your Color</Text>
-        </View>
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Great Matches</Text>
-          <ColorSwatchRow colors={great} selected={item.colorFamily} size={28} />
-        </View>
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Good Options</Text>
-          <ColorSwatchRow colors={mode === "neutrals" ? neutralColors : good} size={28} />
-        </View>
-        <Text style={styles.copy}>
-          These suggestions come from the same deterministic compatibility matrix used by the outfit builder. {item.colorName ?? item.colorFamily} works best when it has a clear neutral anchor and similar saturation.
-        </Text>
-      </ScrollView>
-    </View>
+    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
+      <View style={styles.screen}>
+        <AppHeader title="Color Guide" leftIcon="chevron-back" onLeftPress={onBack} />
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <SegmentedControl options={["matches", "avoid", "neutrals"]} value={mode} onChange={setMode} />
+          <View style={styles.wheelCard}>
+            <ColorGuideWheel selected={item.colorFamily} colorsList={["cream", "sage", "olive", "tan", "brown", "navy", "gray", "white"]} />
+            <Text style={styles.title}>{item.colorName ?? item.colorFamily}</Text>
+            <Text style={styles.muted}>Your Color</Text>
+          </View>
+          <View style={styles.panel}>
+            <Text style={styles.panelTitle}>Great Matches</Text>
+            <ColorSwatchRow colors={great} selected={item.colorFamily} size={28} />
+          </View>
+          <View style={styles.panel}>
+            <Text style={styles.panelTitle}>Good Options</Text>
+            <ColorSwatchRow colors={mode === "neutrals" ? neutralColors : good} size={28} />
+          </View>
+          <Text style={styles.copy}>
+            These suggestions come from the same deterministic compatibility matrix used by the outfit builder. {item.colorName ?? item.colorFamily} works best when it has a clear neutral anchor and similar saturation.
+          </Text>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 18, gap: 16, paddingBottom: 34 },
   wheelCard: {

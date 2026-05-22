@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppHeader } from "../components/AppHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -11,28 +12,31 @@ type Props = {
 
 export function AddFromLinkScreen({ onClose }: Props) {
   return (
-    <View style={styles.screen}>
-      <AppHeader title="Add from Link" leftIcon="close" onLeftPress={onClose} />
-      <View style={styles.content}>
-        <View style={styles.inputWrap}>
-          <Ionicons name="link-outline" size={20} color={colors.textMuted} />
-          <TextInput placeholder="Paste product URL" placeholderTextColor={colors.textDim} style={styles.input} />
-          <Ionicons name="create-outline" size={19} color={colors.gold} />
-        </View>
-        <PrimaryButton label="Import" icon="cloud-download-outline" />
-        <View style={styles.preview}>
-          <View style={styles.model}>
-            <Ionicons name="person-outline" size={92} color={colors.cream} />
+    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
+      <View style={styles.screen}>
+        <AppHeader title="Add from Link" leftIcon="close" onLeftPress={onClose} />
+        <View style={styles.content}>
+          <View style={styles.inputWrap}>
+            <Ionicons name="link-outline" size={20} color={colors.textMuted} />
+            <TextInput placeholder="Paste product URL" placeholderTextColor={colors.textDim} style={styles.input} />
+            <Ionicons name="create-outline" size={19} color={colors.gold} />
           </View>
-          <Text style={styles.title}>Product preview</Text>
-          <Text style={styles.muted}>Mock import card for a future scraper or manual review flow.</Text>
+          <PrimaryButton label="Import" icon="cloud-download-outline" />
+          <View style={styles.preview}>
+            <View style={styles.model}>
+              <Ionicons name="person-outline" size={92} color={colors.cream} />
+            </View>
+            <Text style={styles.title}>Product preview</Text>
+            <Text style={styles.muted}>Mock import card for a future scraper or manual review flow.</Text>
+          </View>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 18, gap: 16 },
   inputWrap: {

@@ -25,7 +25,7 @@ export function ItemDetailsScreen({ item, onBack, onEdit, onDelete, onOpenColorG
   };
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
       <View style={styles.screen}>
         <View style={styles.header}>
           <Pressable style={styles.headerButton} onPress={onBack}>

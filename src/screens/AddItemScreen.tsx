@@ -134,7 +134,7 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
   };
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
       <View style={styles.screen}>
         <AppHeader title={editingItem ? "Edit Item" : "Add Item"} leftIcon="close" onLeftPress={onClose} />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

@@ -38,7 +38,7 @@ export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onSaveOut
   };
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
       <View style={styles.screen}>
         <View style={styles.header}>
           <Pressable style={styles.headerButton} onPress={onClose}>

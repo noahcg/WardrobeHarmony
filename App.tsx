@@ -160,11 +160,12 @@ export default function App() {
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: colors.background },
+              animation: "none",
             }}
           >
             <RootStack.Screen name="MainTabs" component={MainTabs} />
             <RootStack.Screen name="AddItem" component={AddItemRoute} />
-            <RootStack.Screen name="AddFromLink" component={AddFromLinkRoute} options={{ presentation: "modal" }} />
+            <RootStack.Screen name="AddFromLink" component={AddFromLinkRoute} />
             <RootStack.Screen name="ItemDetails" component={ItemDetailsRoute} />
             <RootStack.Screen name="OutfitBuilder" component={OutfitBuilderRoute} />
             <RootStack.Screen name="ColorGuide" component={ColorGuideRoute} />
