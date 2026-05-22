@@ -17,7 +17,8 @@
         {
           "locationWhenInUsePermission": "WardrobeHarmony uses your location to show local weather for outfit planning."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true

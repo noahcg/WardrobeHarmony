@@ -244,9 +244,9 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   wordmark: {
-    fontSize: 19,
-    fontWeight: "800",
-    letterSpacing: 0,
+    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 23,
+    letterSpacing: 0.3,
   },
   wordmarkCream: {
     color: colors.cream,

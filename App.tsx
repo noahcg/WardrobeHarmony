@@ -2,10 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { CormorantGaramond_600SemiBold, useFonts } from "@expo-google-fonts/cormorant-garamond";
 import { StatusBar } from "expo-status-bar";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { mockWardrobe } from "./src/data/mockWardrobe";
 import { fetchCurrentWeather } from "./src/lib/weather";
@@ -220,6 +221,12 @@ export default function App() {
     };
   }, [profile, savedOutfits, selectedItem, wardrobe, weather]);
 
+  const [fontsLoaded] = useFonts({ CormorantGaramond_600SemiBold });
+
+  if (!fontsLoaded) {
+    return <View style={styles.loadingRoot} />;
+  }
+
   return (
     <SafeAreaProvider>
       <WardrobeContext.Provider value={value}>
@@ -246,14 +253,18 @@ export default function App() {
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 10);
   return (
     <Tabs.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: 62 + bottomInset, paddingBottom: bottomInset }],
         tabBarShowLabel: true,
-        tabBarActiveTintColor: colors.cream,
+        tabBarActiveTintColor: colors.gold,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarItemStyle: styles.tabItem,
       }}
     >
       <Tabs.Screen name="Home" component={HomeRoute} options={{ tabBarIcon: tabIcon("home-outline") }} />
@@ -263,7 +274,7 @@ function MainTabs() {
         component={AddPlaceholderRoute}
         options={{
           tabBarIcon: ({ focused }) => <AddTabIcon focused={focused} />,
-          tabBarLabel: "Add",
+          tabBarLabel: () => null,
         }}
         listeners={({ navigation }) => ({
           tabPress: (event) => {
@@ -420,9 +431,9 @@ function createOutfitName(items: ClothingItem[]) {
 }
 
 function tabIcon(icon: keyof typeof Ionicons.glyphMap) {
-  return ({ color, focused }: { color: string; focused: boolean }) => (
-    <View style={[styles.iconWrap, focused && styles.activeIcon]}>
-      <Ionicons name={icon} size={20} color={focused ? colors.gold : color} />
+  return ({ color }: { color: string; focused: boolean }) => (
+    <View style={styles.iconWrap}>
+      <Ionicons name={icon} size={23} color={color} />
     </View>
   );
 }
@@ -430,42 +441,52 @@ function tabIcon(icon: keyof typeof Ionicons.glyphMap) {
 function AddTabIcon({ focused }: { focused: boolean }) {
   return (
     <View style={[styles.addIcon, focused && styles.addIconActive]}>
-      <Ionicons name="add" size={27} color={colors.background} />
+      <Ionicons name="add" size={26} color={colors.cream} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingRoot: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   tabBar: {
-    height: 66,
-    paddingTop: 7,
-    paddingBottom: 6,
-    backgroundColor: "#071015",
-    borderTopWidth: 1,
+    paddingTop: 9,
+    backgroundColor: colors.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
+  tabItem: {
+    paddingTop: 2,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 3,
+  },
   iconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
     alignItems: "center",
     justifyContent: "center",
-  },
-  activeIcon: {
-    backgroundColor: "rgba(199,162,74,0.12)",
   },
   addIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    marginTop: -18,
-    backgroundColor: colors.gold,
-    borderWidth: 4,
-    borderColor: colors.background,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginTop: -22,
+    backgroundColor: colors.background,
+    borderWidth: 1.5,
+    borderColor: colors.gold,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   addIconActive: {
-    backgroundColor: colors.cream,
+    backgroundColor: colors.surfaceElevated,
   },
 });

@@ -6,13 +6,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppHeader } from "../components/AppHeader";
 import { ColorSwatch } from "../components/ColorSwatch";
-import { ColorSwatchRow } from "../components/ColorSwatchRow";
 import { FilterChip } from "../components/FilterChip";
-import { PrimaryButton } from "../components/PrimaryButton";
 import { SegmentedControl } from "../components/SegmentedControl";
+import { SelectField, SelectOption } from "../components/SelectField";
 import { detectGarmentColor, DetectedGarmentColor } from "../lib/colorExtraction";
 import { persistItemImage } from "../storage/wardrobeStore";
-import { ClothingCategory, ClothingItem, ColorFamily, Formality, Pattern, Saturation, Tone } from "../models/clothing";
+import { ClothingCategory, ClothingItem, ColorFamily, Formality, Pattern, Saturation, Season, Tone } from "../models/clothing";
 import { colors } from "../theme/colors";
 
 type Props = {
@@ -22,22 +21,70 @@ type Props = {
   onSave: (item: ClothingItem) => void;
 };
 
-const colorOptions: ColorFamily[] = ["black", "white", "gray", "navy", "blue", "brown", "tan", "cream", "olive", "sage", "burgundy"];
-const categoryOptions: ClothingCategory[] = ["top", "bottom", "shoes", "outerwear", "accessory"];
-const formalityOptions: Formality[] = ["casual", "smart-casual", "business", "formal"];
-const patternOptions: Pattern[] = ["solid", "stripe", "plaid", "check", "graphic", "texture"];
+const colorOptions: SelectOption<ColorFamily>[] = (
+  ["black", "white", "gray", "navy", "blue", "brown", "tan", "cream", "olive", "sage", "burgundy"] as ColorFamily[]
+).map((value) => ({
+  value,
+  label: colorFamilyLabel(value),
+  leading: <ColorSwatch color={value} size={22} />,
+}));
+
+const categoryOptions: SelectOption<ClothingCategory>[] = [
+  { value: "top", label: "Tops" },
+  { value: "bottom", label: "Bottoms" },
+  { value: "shoes", label: "Shoes" },
+  { value: "outerwear", label: "Outerwear" },
+  { value: "accessory", label: "Accessories" },
+];
+
+const toneOptions: SelectOption<Tone>[] = [
+  { value: "light", label: "Light" },
+  { value: "medium", label: "Medium" },
+  { value: "dark", label: "Dark" },
+];
+
+const saturationOptions: SelectOption<Saturation>[] = [
+  { value: "neutral", label: "Neutral" },
+  { value: "muted", label: "Muted" },
+  { value: "rich", label: "Rich" },
+  { value: "bright", label: "Bright" },
+];
+
+const formalityOptions: SelectOption<Formality>[] = [
+  { value: "casual", label: "Casual" },
+  { value: "smart-casual", label: "Smart-Casual" },
+  { value: "business", label: "Business" },
+  { value: "formal", label: "Formal" },
+];
+
+const patternOptions: SelectOption<Pattern>[] = [
+  { value: "solid", label: "Solid" },
+  { value: "stripe", label: "Stripe" },
+  { value: "plaid", label: "Plaid" },
+  { value: "check", label: "Check" },
+  { value: "graphic", label: "Graphic" },
+  { value: "texture", label: "Texture" },
+];
+
+const seasonOptions: { value: Season; label: string }[] = [
+  { value: "spring", label: "Spring" },
+  { value: "summer", label: "Summer" },
+  { value: "fall", label: "Fall" },
+  { value: "winter", label: "Winter" },
+  { value: "all-season", label: "All-Season" },
+];
 
 export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Props) {
   const [mode, setMode] = useState<"photo" | "link" | "manual">("photo");
   const [imageUri, setImageUri] = useState<string | undefined>(editingItem?.imageUrl);
-  const [name, setName] = useState(editingItem?.name ?? "New Wardrobe Item");
-  const [subcategory, setSubcategory] = useState(editingItem?.subcategory ?? "Button Down");
+  const [name, setName] = useState(editingItem?.name ?? "");
   const [colorFamily, setColorFamily] = useState<ColorFamily>(editingItem?.colorFamily ?? "sage");
   const [category, setCategory] = useState<ClothingCategory>(editingItem?.category ?? "top");
   const [tone, setTone] = useState<Tone>(editingItem?.tone ?? "medium");
   const [saturation, setSaturation] = useState<Saturation>(editingItem?.saturation ?? "muted");
   const [formality, setFormality] = useState<Formality>(editingItem?.formality ?? "smart-casual");
   const [pattern, setPattern] = useState<Pattern>(editingItem?.pattern ?? "solid");
+  const [seasons, setSeasons] = useState<Season[]>(editingItem?.seasons ?? ["summer"]);
   const [isSaving, setIsSaving] = useState(false);
   const [detectedColor, setDetectedColor] = useState<DetectedGarmentColor>();
   const [isDetectingColor, setIsDetectingColor] = useState(false);
@@ -76,6 +123,14 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
     }
   };
 
+  const choosePhotoSource = () => {
+    Alert.alert("Add photo", "Capture a new photo or import one from your library.", [
+      { text: "Take Photo", onPress: takePhoto },
+      { text: "Choose from Library", onPress: pickImage },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
   const useSelectedImage = async (uri: string) => {
     setImageUri(uri);
     setIsDetectingColor(true);
@@ -91,6 +146,12 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
     } finally {
       setIsDetectingColor(false);
     }
+  };
+
+  const toggleSeason = (season: Season) => {
+    setSeasons((current) =>
+      current.includes(season) ? current.filter((value) => value !== season) : [...current, season],
+    );
   };
 
   const saveItem = async () => {
@@ -109,14 +170,14 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
         id,
         name: trimmedName,
         category,
-        subcategory: subcategory.trim() || undefined,
-        colorName: label(colorFamily),
+        subcategory: editingItem?.subcategory,
+        colorName: colorFamilyLabel(colorFamily),
         colorFamily,
         tone,
         saturation,
         formality,
         pattern,
-        seasons: editingItem?.seasons ?? ["all-season"],
+        seasons: seasons.length ? seasons : ["all-season"],
         imageUrl: savedImage,
         confidence: detectedColor?.confidence ?? editingItem?.confidence ?? "medium",
         notes:
@@ -150,87 +211,76 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.photo} />
             ) : (
-              <View style={styles.garment}>
-                <Ionicons name="shirt-outline" size={82} color={colors.cream} />
-                <Text style={styles.photoHint}>Photograph or import a clothing item</Text>
+              <View style={styles.placeholder}>
+                <Ionicons name="shirt-outline" size={72} color={colors.sageDark} />
+                <Text style={styles.placeholderText}>Photograph or import a clothing item</Text>
               </View>
             )}
-            <View style={styles.photoActions}>
-              <Pressable style={styles.photoButton} onPress={takePhoto}>
-                <Ionicons name="camera-outline" size={18} color={colors.background} />
-                <Text style={styles.photoButtonText}>Camera</Text>
-              </Pressable>
-              <Pressable style={styles.secondaryButton} onPress={pickImage}>
-                <Ionicons name="images-outline" size={18} color={colors.cream} />
-                <Text style={styles.secondaryButtonText}>Library</Text>
-              </Pressable>
-            </View>
+            <Pressable style={styles.cameraFab} onPress={choosePhotoSource}>
+              <Ionicons name="camera" size={20} color={colors.cream} />
+            </Pressable>
           </View>
-          <View style={styles.panel}>
-            <Text style={styles.kicker}>Item Details</Text>
-            <TextInput value={name} onChangeText={setName} placeholder="Item name" placeholderTextColor={colors.textDim} style={styles.input} />
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Name</Text>
             <TextInput
-              value={subcategory}
-              onChangeText={setSubcategory}
-              placeholder="Subcategory"
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Sage Green Shirt"
               placeholderTextColor={colors.textDim}
               style={styles.input}
             />
+          </View>
+
+          <SelectField label="Category" value={category} options={categoryOptions} onChange={setCategory} />
+
+          <View style={styles.grid}>
+            <View style={styles.col}>
+              <SelectField label="Color Family" value={colorFamily} options={colorOptions} onChange={setColorFamily} />
+              {isDetectingColor ? <Text style={styles.hint}>Detecting from photo…</Text> : null}
+            </View>
+            <View style={styles.col}>
+              <SelectField label="Tone" value={tone} options={toneOptions} onChange={setTone} />
+            </View>
+          </View>
+
+          <View style={styles.grid}>
+            <View style={styles.col}>
+              <SelectField label="Saturation" value={saturation} options={saturationOptions} onChange={setSaturation} />
+            </View>
+            <View style={styles.col}>
+              <SelectField label="Formality" value={formality} options={formalityOptions} onChange={setFormality} />
+            </View>
+          </View>
+
+          <SelectField label="Pattern" value={pattern} options={patternOptions} onChange={setPattern} />
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Season</Text>
             <View style={styles.chipRow}>
-              {categoryOptions.map((option) => (
-                <FilterChip key={option} label={label(option)} active={category === option} onPress={() => setCategory(option)} />
+              {seasonOptions.map((option) => (
+                <FilterChip
+                  key={option.value}
+                  label={option.label}
+                  active={seasons.includes(option.value)}
+                  onPress={() => toggleSeason(option.value)}
+                />
               ))}
             </View>
           </View>
-          <View style={styles.panel}>
-            <Text style={styles.kicker}>Color</Text>
-            <View style={styles.colorRow}>
-              <ColorSwatch color={colorFamily} size={52} selected />
-              <View>
-                <Text style={styles.title}>{label(colorFamily)}</Text>
-                <Text style={styles.muted}>
-                  {isDetectingColor
-                    ? "Detecting from photo..."
-                    : detectedColor
-                      ? `Detected ${detectedColor.confidence} confidence · ${detectedColor.hex}`
-                      : "Detected from photo or manually corrected"}
-                </Text>
-              </View>
-            </View>
-            <ColorSwatchRow colors={colorOptions} selected={colorFamily} />
-            <View style={styles.chipRow}>
-              {colorOptions.map((option) => (
-                <FilterChip key={option} label={label(option)} active={colorFamily === option} onPress={() => setColorFamily(option)} />
-              ))}
-            </View>
-          </View>
-          <View style={styles.panel}>
-            <Text style={styles.kicker}>Harmony Metadata</Text>
-            <SegmentedControl options={["light", "medium", "dark"]} value={tone} onChange={setTone} />
-            <SegmentedControl options={["neutral", "muted", "rich", "bright"]} value={saturation} onChange={setSaturation} />
-            <View style={styles.chipRow}>
-              {formalityOptions.map((option) => (
-                <FilterChip key={option} label={label(option)} active={formality === option} onPress={() => setFormality(option)} />
-              ))}
-            </View>
-            <View style={styles.chipRow}>
-              {patternOptions.map((option) => (
-                <FilterChip key={option} label={label(option)} active={pattern === option} onPress={() => setPattern(option)} />
-              ))}
-            </View>
-          </View>
-          <PrimaryButton label={isSaving ? "Saving..." : editingItem ? "Save Changes" : "Save Item"} icon="checkmark" onPress={saveItem} />
+
+          <Pressable style={styles.saveButton} onPress={saveItem} disabled={isSaving}>
+            <Text style={styles.saveLabel}>{isSaving ? "Saving…" : editingItem ? "Save Changes" : "Save Item"}</Text>
+          </Pressable>
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 }
 
-function label(value: string) {
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function colorFamilyLabel(value: ColorFamily) {
+  if (value === "sage") return "Sage Green";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 const styles = StyleSheet.create({
@@ -244,14 +294,12 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    gap: 13,
+    gap: 16,
     paddingBottom: 34,
   },
   photoCard: {
-    height: 292,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
+    height: 230,
+    borderRadius: 14,
     backgroundColor: colors.productMat,
     alignItems: "center",
     justifyContent: "center",
@@ -262,108 +310,39 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
-  garment: {
-    width: 184,
-    height: 214,
-    borderRadius: 28,
+  placeholder: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#9EA56F",
-    borderWidth: 1,
-    borderColor: "rgba(247,242,232,0.28)",
+    paddingHorizontal: 24,
   },
-  photoHint: {
-    color: colors.cream,
+  placeholderText: {
+    color: colors.sageDark,
     fontSize: 13,
     fontWeight: "700",
     marginTop: 12,
     textAlign: "center",
-    paddingHorizontal: 18,
   },
-  photoActions: {
+  cameraFab: {
     position: "absolute",
-    left: 16,
-    right: 16,
-    bottom: 16,
-    flexDirection: "row",
-    gap: 10,
-  },
-  photoButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 23,
-    backgroundColor: colors.gold,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-  },
-  photoButtonText: {
-    color: colors.background,
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  secondaryButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 23,
-    backgroundColor: "rgba(5,11,14,0.78)",
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-  },
-  secondaryButtonText: {
-    color: colors.cream,
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  panel: {
-    gap: 13,
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  kicker: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
-  },
-  detectedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  smallIcon: {
+    right: 14,
+    bottom: 14,
     width: 46,
     height: 46,
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: "rgba(3,9,12,0.82)",
   },
-  title: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
+  fieldGroup: {
+    gap: 7,
   },
-  muted: {
+  fieldLabel: {
     color: colors.textMuted,
     fontSize: 13,
-    marginTop: 2,
-  },
-  colorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 13,
+    fontWeight: "600",
   },
   input: {
-    minHeight: 48,
+    minHeight: 50,
     borderRadius: 10,
     paddingHorizontal: 14,
     color: colors.text,
@@ -371,10 +350,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     fontSize: 15,
+    fontWeight: "600",
+  },
+  grid: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  col: {
+    flex: 1,
+    gap: 7,
+  },
+  hint: {
+    color: colors.textMuted,
+    fontSize: 12,
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+  },
+  saveButton: {
+    minHeight: 54,
+    borderRadius: 13,
+    backgroundColor: colors.sage,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  saveLabel: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: "800",
   },
 });

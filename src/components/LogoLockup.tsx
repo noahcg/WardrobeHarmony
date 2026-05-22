@@ -29,14 +29,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   wordmark: {
-    fontSize: 25,
-    lineHeight: 29,
-    fontWeight: "700",
-    letterSpacing: 0,
+    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 28,
+    lineHeight: 32,
+    letterSpacing: 0.3,
   },
   compactWordmark: {
-    fontSize: 19,
-    lineHeight: 23,
+    fontSize: 22,
+    lineHeight: 26,
   },
   wardrobe: {
     color: colors.cream,
