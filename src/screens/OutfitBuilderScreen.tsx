@@ -4,8 +4,6 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconActionBar } from "../components/IconActionBar";
-import { ItemPicker } from "../components/ItemPicker";
-import { OutfitCanvas } from "../components/OutfitCanvas";
 import { evaluateCompatibility, findSuggestedSwaps } from "../lib/matchingEngine";
 import { ClothingItem } from "../models/clothing";
 import { colorFamilyHex, colors } from "../theme/colors";
@@ -22,15 +20,6 @@ export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onSaveOut
   const [items, setItems] = useState<ClothingItem[]>(initialItems);
   const result = useMemo(() => evaluateCompatibility(items), [items]);
   const swaps = useMemo(() => findSuggestedSwaps(items, wardrobe), [items, wardrobe]);
-
-  const toggleItem = (item: ClothingItem) => {
-    setItems((current) => {
-      if (current.some((selected) => selected.id === item.id)) {
-        return current.filter((selected) => selected.id !== item.id);
-      }
-      return [...current, item];
-    });
-  };
 
   const selectSwap = (item: ClothingItem) => {
     setItems((current) => {
@@ -61,12 +50,12 @@ export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onSaveOut
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <OutfitCanvas items={items} />
+        <ScrollView bounces={false} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ReferenceFlatLay items={items} />
           <View style={styles.actionStrip}>
             <IconActionBar
               actions={[
-                { icon: "bag-add-outline" },
+                { icon: "bag-add-outline", onPress: () => setItems((current) => [...current, wardrobe.find((item) => !current.some((selected) => selected.id === item.id)) ?? current[0]].filter(Boolean)) },
                 { icon: "color-palette-outline", onPress: () => items[0] && onOpenColorGuide(items[0]) },
                 { icon: "shuffle-outline", onPress: () => setItems(getShuffleOutfit(wardrobe)) },
                 { icon: "heart-outline", onPress: saveOutfit },
@@ -106,11 +95,51 @@ export function OutfitBuilderScreen({ wardrobe, initialItems, onClose, onSaveOut
               ))}
             </ScrollView>
           </View>
-
-          <ItemPicker items={wardrobe} selectedItems={items} onToggle={toggleItem} />
         </ScrollView>
       </View>
     </SafeAreaView>
+  );
+}
+
+function ReferenceFlatLay({ items }: { items: ClothingItem[] }) {
+  const outerwear = items.find((item) => item.category === "outerwear") ?? items.find((item) => item.category === "top");
+  const top = items.find((item) => item.category === "top");
+  const bottom = items.find((item) => item.category === "bottom");
+  const shoes = items.find((item) => item.category === "shoes");
+  const accessory = items.find((item) => item.category === "accessory");
+
+  return (
+    <View style={styles.canvas}>
+      {bottom ? <ReferencePiece item={bottom} style={[styles.canvasPiece, styles.pantsPiece]} shapeStyle={styles.pantsShape} iconSize={34} /> : null}
+      {top && top.id !== outerwear?.id ? <ReferencePiece item={top} style={[styles.canvasPiece, styles.teePiece]} shapeStyle={styles.teeShape} iconSize={32} /> : null}
+      {outerwear ? <ReferencePiece item={outerwear} style={[styles.canvasPiece, styles.jacketPiece]} shapeStyle={styles.jacketShape} iconSize={48} /> : null}
+      {accessory ? <ReferencePiece item={accessory} style={[styles.canvasPiece, styles.watchPiece]} shapeStyle={styles.watchShape} iconSize={22} /> : null}
+      {shoes ? <ReferencePiece item={shoes} style={[styles.canvasPiece, styles.shoePiece]} shapeStyle={styles.shoeShape} iconSize={31} /> : null}
+    </View>
+  );
+}
+
+function ReferencePiece({
+  item,
+  style,
+  shapeStyle,
+  iconSize,
+}: {
+  item: ClothingItem;
+  style: object;
+  shapeStyle: object;
+  iconSize: number;
+}) {
+  return (
+    <View style={style}>
+      {item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.photo} />
+      ) : (
+        <View style={[styles.referenceGarment, shapeStyle, { backgroundColor: colorFamilyHex[item.colorFamily] }]}>
+          <Ionicons name={iconFor(item.category)} size={iconSize} color="rgba(247,242,232,0.84)" />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -142,7 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    height: 48,
+    height: 44,
     paddingHorizontal: 18,
     flexDirection: "row",
     alignItems: "center",
@@ -169,18 +198,99 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 18,
-    paddingBottom: 30,
+    paddingBottom: 18,
+  },
+  canvas: {
+    height: 286,
+    borderRadius: 10,
+    backgroundColor: "#050B0E",
+    borderWidth: 1,
+    borderColor: "rgba(191,169,124,0.08)",
+    overflow: "hidden",
+  },
+  canvasPiece: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.46,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  jacketPiece: {
+    top: 8,
+    left: 34,
+    width: 196,
+    height: 176,
+  },
+  teePiece: {
+    top: 76,
+    left: 104,
+    width: 62,
+    height: 74,
+  },
+  pantsPiece: {
+    top: 114,
+    left: 92,
+    width: 98,
+    height: 138,
+  },
+  shoePiece: {
+    right: 18,
+    bottom: 26,
+    width: 122,
+    height: 68,
+  },
+  watchPiece: {
+    right: 26,
+    top: 94,
+    width: 36,
+    height: 84,
+  },
+  referenceGarment: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
+  },
+  jacketShape: {
+    width: 172,
+    height: 158,
+    borderRadius: 24,
+  },
+  teeShape: {
+    width: 54,
+    height: 66,
+    borderRadius: 14,
+  },
+  pantsShape: {
+    width: 76,
+    height: 128,
+    borderRadius: 18,
+  },
+  shoeShape: {
+    width: 112,
+    height: 48,
+    borderRadius: 24,
+  },
+  watchShape: {
+    width: 30,
+    height: 72,
+    borderRadius: 15,
   },
   actionStrip: {
-    marginTop: -2,
+    marginTop: 0,
   },
   matchCard: {
-    marginTop: 10,
+    marginTop: 8,
     borderRadius: 10,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: "rgba(191,169,124,0.1)",
-    padding: 14,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 11,
   },
   matchHeader: {
     flexDirection: "row",
@@ -214,17 +324,17 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 13,
     fontWeight: "900",
-    marginTop: 8,
-    marginBottom: 5,
+    marginTop: 2,
+    marginBottom: 4,
   },
   reason: {
     color: colors.text,
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   swapsSection: {
-    marginTop: 18,
-    gap: 11,
+    marginTop: 13,
+    gap: 9,
   },
   swapsTitle: {
     color: colors.text,
@@ -236,8 +346,8 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   swapCard: {
-    width: 92,
-    height: 78,
+    width: 88,
+    height: 72,
     borderRadius: 8,
     backgroundColor: colors.productMat,
     alignItems: "center",
