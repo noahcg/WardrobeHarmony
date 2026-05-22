@@ -364,9 +364,9 @@ function AddTabIcon({ focused }: { focused: boolean }) {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 72,
-    paddingTop: 9,
-    paddingBottom: 8,
+    height: 66,
+    paddingTop: 7,
+    paddingBottom: 6,
     backgroundColor: "#071015",
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -382,10 +382,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(199,162,74,0.12)",
   },
   addIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginTop: -20,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginTop: -18,
     backgroundColor: colors.gold,
     borderWidth: 4,
     borderColor: colors.background,

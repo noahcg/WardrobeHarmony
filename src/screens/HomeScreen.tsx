@@ -1,12 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { LogoLockup } from "../components/LogoLockup";
-import { OutfitCanvas } from "../components/OutfitCanvas";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { HangerLogo } from "../components/HangerLogo";
 import { evaluateCompatibility } from "../lib/matchingEngine";
 import { ClothingCategory, ClothingItem } from "../models/clothing";
-import { colors } from "../theme/colors";
+import { colorFamilyHex, colors } from "../theme/colors";
 
 type Props = {
   wardrobe: ClothingItem[];
@@ -25,53 +24,116 @@ export function HomeScreen({ wardrobe, onOpenBuilder, onOpenColorGuide }: Props)
   }));
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <LogoLockup compact />
-        <Pressable style={styles.iconButton} onPress={onOpenColorGuide}>
-          <Ionicons name="notifications-outline" size={20} color={colors.text} />
-        </Pressable>
-      </View>
-
-      <View style={styles.wardrobeCard}>
-        <View>
-          <Text style={styles.kicker}>Your Wardrobe</Text>
-          <Text style={styles.count}>{wardrobe.length}</Text>
-          <Text style={styles.muted}>items organized by color, role, and season</Text>
-        </View>
-        <View style={styles.donut}>
-          <View style={styles.donutInner}>
-            <Text style={styles.donutNumber}>{wardrobe.length}</Text>
-            <Text style={styles.donutLabel}>saved</Text>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.logoRow}>
+            <HangerLogo size={34} />
+            <Text style={styles.wordmark}>
+              <Text style={styles.wordmarkCream}>Wardrobe</Text>
+              <Text style={styles.wordmarkGold}>Harmony</Text>
+            </Text>
           </View>
+          <Pressable style={styles.bellButton} onPress={onOpenColorGuide}>
+            <Ionicons name="notifications-outline" size={19} color={colors.text} />
+          </Pressable>
         </View>
-      </View>
 
-      <View style={styles.breakdown}>
-        {counts.map((entry) => (
-          <View key={entry.category} style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>{entry.category}</Text>
-            <Text style={styles.breakdownCount}>{entry.count}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.pickCard}>
-        <View style={styles.pickHeader}>
+        <View style={styles.greetingRow}>
+          <Ionicons name="sunny-outline" size={24} color={colors.gold} />
           <View>
-            <Text style={styles.kicker}>Today's Pick</Text>
-            <Text style={styles.pickTitle}>{todayItems.map((item) => item.colorFamily).join(", ")}</Text>
-            <Text style={styles.muted}>Cool, 68°F</Text>
-          </View>
-          <View style={styles.scorePill}>
-            <Text style={styles.scoreText}>{result.score}</Text>
-            <Text style={styles.scoreLabel}>{result.rating}</Text>
+            <Text style={styles.greeting}>Good morning, Alex</Text>
+            <Text style={styles.greetingSub}>Let's build your best outfit.</Text>
           </View>
         </View>
-        <OutfitCanvas items={todayItems} />
-        <PrimaryButton label="Open Outfit Builder" icon="color-wand-outline" onPress={onOpenBuilder} />
-      </View>
-    </ScrollView>
+
+        <Pressable style={styles.todayCard} onPress={onOpenBuilder}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>Today's Pick</Text>
+              <Text style={styles.sectionSub}>Cool, 68°F</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.cream} />
+          </View>
+          <MiniFlatLay items={todayItems} />
+        </Pressable>
+
+        <View style={styles.wardrobeCard}>
+          <View style={styles.wardrobeTop}>
+            <View>
+              <Text style={styles.sectionTitle}>Your Wardrobe</Text>
+              <Text style={styles.itemCount}>{wardrobe.length}</Text>
+              <Text style={styles.sectionSub}>Items</Text>
+            </View>
+            <View style={styles.donut}>
+              <View style={styles.donutHole} />
+            </View>
+          </View>
+
+          <View style={styles.breakdown}>
+            {counts.map((entry) => (
+              <View key={entry.category} style={styles.breakdownRow}>
+                <View style={styles.breakdownLabelRow}>
+                  <View style={[styles.categoryDot, categoryDotStyle(entry.category)]} />
+                  <Text style={styles.breakdownLabel}>{label(entry.category)}</Text>
+                </View>
+                <View style={styles.rule} />
+                <Text style={styles.breakdownCount}>{entry.count}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <Pressable style={styles.suggestedCard} onPress={onOpenBuilder}>
+          <View>
+            <Text style={styles.sectionTitle}>Suggested Outfit</Text>
+            <Text style={styles.matchText}>{result.rating} Match</Text>
+          </View>
+          <View style={styles.suggestedBody}>
+            <View style={styles.suggestedItems}>
+              {todayItems.slice(0, 4).map((item) => (
+                <MiniItem key={item.id} item={item} />
+              ))}
+            </View>
+            <View style={styles.scoreRing}>
+              <Text style={styles.score}>{result.score}</Text>
+            </View>
+          </View>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function MiniFlatLay({ items }: { items: ClothingItem[] }) {
+  return (
+    <View style={styles.flatLay}>
+      {items.slice(0, 4).map((item) => (
+        <View key={item.id} style={[styles.flatLayPiece, flatLayPieceStyle(item.category)]}>
+          {item.imageUrl ? (
+            <Image source={{ uri: item.imageUrl }} style={styles.photo} />
+          ) : (
+            <View style={[styles.garmentShape, { backgroundColor: colorFamilyHex[item.colorFamily] }, garmentShapeStyle(item.category)]}>
+              <Ionicons name={iconFor(item.category)} size={item.category === "accessory" ? 18 : 30} color="rgba(247,242,232,0.82)" />
+            </View>
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function MiniItem({ item }: { item: ClothingItem }) {
+  return (
+    <View style={styles.miniItem}>
+      {item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.photo} />
+      ) : (
+        <View style={[styles.garmentShape, { backgroundColor: colorFamilyHex[item.colorFamily] }, garmentShapeStyle(item.category)]}>
+          <Ionicons name={iconFor(item.category)} size={24} color="rgba(247,242,232,0.82)" />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -79,145 +141,323 @@ function getTodayItems(wardrobe: ClothingItem[]) {
   const top = wardrobe.find((item) => item.category === "top");
   const bottom = wardrobe.find((item) => item.category === "bottom");
   const shoes = wardrobe.find((item) => item.category === "shoes");
-  return [top, bottom, shoes].filter(Boolean) as ClothingItem[];
+  const accessory = wardrobe.find((item) => item.category === "accessory");
+  return [top, bottom, shoes, accessory].filter(Boolean) as ClothingItem[];
+}
+
+function iconFor(category: ClothingCategory) {
+  const icons: Record<ClothingCategory, keyof typeof Ionicons.glyphMap> = {
+    top: "shirt-outline",
+    bottom: "reorder-four-outline",
+    shoes: "footsteps-outline",
+    outerwear: "body-outline",
+    accessory: "watch-outline",
+  };
+  return icons[category];
+}
+
+function label(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function categoryDotStyle(category: ClothingCategory) {
+  const dotColors: Record<ClothingCategory, string> = {
+    top: colors.sage,
+    bottom: colors.sageDark,
+    outerwear: colors.gold,
+    shoes: colors.tan,
+    accessory: "#7A4E24",
+  };
+  return { backgroundColor: dotColors[category] };
+}
+
+function flatLayPieceStyle(category: ClothingCategory) {
+  if (category === "bottom") return styles.flatLayBottom;
+  if (category === "shoes") return styles.flatLayShoes;
+  if (category === "accessory") return styles.flatLayAccessory;
+  return null;
+}
+
+function garmentShapeStyle(category: ClothingCategory) {
+  if (category === "bottom") return styles.garmentBottom;
+  if (category === "shoes") return styles.garmentShoe;
+  if (category === "accessory") return styles.garmentAccessory;
+  return null;
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.background,
   },
   content: {
-    padding: 16,
-    paddingBottom: 28,
-    gap: 16,
+    paddingHorizontal: 18,
+    paddingTop: 6,
+    paddingBottom: 16,
+    gap: 13,
   },
   header: {
+    minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  logoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  wordmark: {
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 0,
+  },
+  wordmarkCream: {
+    color: colors.cream,
+  },
+  wordmarkGold: {
+    color: colors.sage,
+  },
+  bellButton: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  greetingRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 11,
+    paddingTop: 1,
+  },
+  greeting: {
+    color: colors.text,
+    fontSize: 21,
+    lineHeight: 25,
+    fontWeight: "800",
+  },
+  greetingSub: {
+    color: colors.textMuted,
+    fontSize: 14,
+    marginTop: 3,
+  },
+  todayCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(191,169,124,0.12)",
+    backgroundColor: colors.surface,
+    padding: 12,
+    gap: 10,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: "800",
+  },
+  sectionSub: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 15,
+    marginTop: 2,
+  },
+  flatLay: {
+    height: 150,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: colors.productMat,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  flatLayPiece: {
+    position: "absolute",
+    left: 24,
+    bottom: 14,
+    width: 92,
+    height: 110,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  flatLayBottom: {
+    left: 110,
+    bottom: 16,
+    width: 66,
+    height: 112,
+  },
+  flatLayShoes: {
+    left: 158,
+    bottom: 10,
+    width: 86,
+    height: 52,
+  },
+  flatLayAccessory: {
+    left: 230,
+    bottom: 50,
+    width: 46,
+    height: 70,
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  garmentShape: {
+    width: "82%",
+    height: "82%",
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: "rgba(255,255,255,0.26)",
+    shadowColor: "#000",
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 5 },
+  },
+  garmentBottom: {
+    width: "58%",
+    height: "92%",
+    borderRadius: 14,
+  },
+  garmentShoe: {
+    width: "94%",
+    height: "56%",
+    borderRadius: 18,
+  },
+  garmentAccessory: {
+    width: "68%",
+    height: "68%",
+    borderRadius: 22,
   },
   wardrobeCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 18,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated,
-    padding: 16,
+    borderColor: "rgba(191,169,124,0.12)",
+    backgroundColor: colors.surface,
+    padding: 12,
+    gap: 10,
   },
-  kicker: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
+  wardrobeTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  count: {
+  itemCount: {
     color: colors.text,
-    fontSize: 40,
-    fontWeight: "800",
-  },
-  muted: {
-    color: colors.textMuted,
-    fontSize: 13,
+    fontSize: 38,
+    lineHeight: 42,
+    fontWeight: "300",
+    marginTop: 4,
   },
   donut: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
+    width: 78,
+    height: 78,
+    borderRadius: 39,
     borderWidth: 12,
-    borderTopColor: colors.gold,
-    borderRightColor: colors.sage,
-    borderBottomColor: colors.tan,
-    borderLeftColor: colors.navy,
+    borderTopColor: colors.sage,
+    borderRightColor: "#D6D7B9",
+    borderBottomColor: colors.gold,
+    borderLeftColor: colors.sageDark,
     alignItems: "center",
     justifyContent: "center",
   },
-  donutInner: {
-    alignItems: "center",
-  },
-  donutNumber: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  donutLabel: {
-    color: colors.textMuted,
-    fontSize: 11,
+  donutHole: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
   },
   breakdown: {
-    gap: 8,
+    gap: 4,
   },
   breakdownRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    alignItems: "center",
+    minHeight: 17,
+  },
+  breakdownLabelRow: {
+    width: 92,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  categoryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   breakdownLabel: {
     color: colors.text,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
-    textTransform: "capitalize",
+  },
+  rule: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(239,231,216,0.08)",
   },
   breakdownCount: {
-    color: colors.sage,
-    fontSize: 14,
-    fontWeight: "800",
+    width: 28,
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "right",
   },
-  pickCard: {
-    gap: 14,
-    borderRadius: 18,
+  suggestedCard: {
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(191,169,124,0.12)",
     backgroundColor: colors.surface,
-    padding: 14,
+    padding: 12,
+    gap: 8,
   },
-  pickHeader: {
+  matchText: {
+    color: colors.sage,
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 1,
+  },
+  suggestedBody: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
   },
-  pickTitle: {
-    color: colors.text,
-    fontSize: 19,
-    fontWeight: "800",
-    marginTop: 3,
+  suggestedItems: {
+    flexDirection: "row",
+    gap: 8,
+    flex: 1,
   },
-  scorePill: {
-    minWidth: 64,
-    borderRadius: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+  miniItem: {
+    width: 48,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: colors.productMat,
     alignItems: "center",
-    backgroundColor: "rgba(158,165,111,0.16)",
-    borderWidth: 1,
-    borderColor: colors.border,
+    justifyContent: "center",
+    overflow: "hidden",
   },
-  scoreText: {
-    color: colors.gold,
-    fontSize: 21,
+  scoreRing: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: colors.sage,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  score: {
+    color: colors.text,
+    fontSize: 16,
     fontWeight: "900",
-  },
-  scoreLabel: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "800",
   },
 });
