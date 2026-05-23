@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { CormorantGaramond_600SemiBold, useFonts } from "@expo-google-fonts/cormorant-garamond";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -63,6 +64,9 @@ type WardrobeContextValue = {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<TabParamList>();
 const WardrobeContext = createContext<WardrobeContextValue | null>(null);
+
+// Keep the native splash visible until fonts are loaded; hidden in the App body below.
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function App() {
   const [wardrobe, setWardrobe] = useState<ClothingItem[]>(mockWardrobe);
@@ -223,9 +227,14 @@ export default function App() {
 
   const [fontsLoaded] = useFonts({ CormorantGaramond_600SemiBold });
 
-  if (!fontsLoaded) {
-    return <View style={styles.loadingRoot} />;
-  }
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [fontsLoaded]);
+
+  // Return null while loading — the native splash stays visible until hideAsync runs.
+  if (!fontsLoaded) return null;
 
   return (
     <SafeAreaProvider>
@@ -447,10 +456,6 @@ function AddTabIcon({ focused }: { focused: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  loadingRoot: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   tabBar: {
     paddingTop: 9,
     backgroundColor: colors.background,

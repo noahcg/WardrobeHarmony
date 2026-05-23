@@ -6,9 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
-    "splash": {
-      "backgroundColor": "#050B0E"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -19,7 +16,24 @@
           "locationWhenInUsePermission": "WardrobeHarmony uses your location to show local weather for outfit planning."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.5"
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#050B0E",
+          "image": "./assets/splash.png",
+          "imageWidth": 320,
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,

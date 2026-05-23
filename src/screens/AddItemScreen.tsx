@@ -10,6 +10,7 @@ import { FilterChip } from "../components/FilterChip";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { SelectField, SelectOption } from "../components/SelectField";
 import { detectGarmentColor, DetectedGarmentColor } from "../lib/colorExtraction";
+import { detectGarmentType, DetectedGarmentType } from "../lib/garmentType";
 import { persistItemImage } from "../storage/wardrobeStore";
 import { ClothingCategory, ClothingItem, ColorFamily, Formality, Pattern, Saturation, Season, Tone } from "../models/clothing";
 import { colors } from "../theme/colors";
@@ -84,9 +85,11 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
   const [saturation, setSaturation] = useState<Saturation>(editingItem?.saturation ?? "muted");
   const [formality, setFormality] = useState<Formality>(editingItem?.formality ?? "smart-casual");
   const [pattern, setPattern] = useState<Pattern>(editingItem?.pattern ?? "solid");
+  const [subcategory, setSubcategory] = useState(editingItem?.subcategory);
   const [seasons, setSeasons] = useState<Season[]>(editingItem?.seasons ?? ["summer"]);
   const [isSaving, setIsSaving] = useState(false);
   const [detectedColor, setDetectedColor] = useState<DetectedGarmentColor>();
+  const [detectedType, setDetectedType] = useState<DetectedGarmentType>();
   const [isDetectingColor, setIsDetectingColor] = useState(false);
 
   const pickImage = async () => {
@@ -134,18 +137,29 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
   const useSelectedImage = async (uri: string) => {
     setImageUri(uri);
     setIsDetectingColor(true);
-    try {
-      const detection = await detectGarmentColor(uri);
+    const [colorResult, typeResult] = await Promise.allSettled([detectGarmentColor(uri), detectGarmentType(uri)]);
+
+    if (colorResult.status === "fulfilled") {
+      const detection = colorResult.value;
       setDetectedColor(detection);
       setColorFamily(detection.colorFamily);
       setTone(detection.tone);
       setSaturation(detection.saturation);
-    } catch (error) {
-      console.warn("Could not detect garment color", error);
-      Alert.alert("Color detection failed", "The photo was added, but color can be corrected manually.");
-    } finally {
-      setIsDetectingColor(false);
+    } else {
+      console.warn("Could not detect garment color", colorResult.reason);
     }
+
+    if (typeResult.status === "fulfilled" && typeResult.value) {
+      const type = typeResult.value;
+      setDetectedType(type);
+      // Only auto-fill when we're reasonably sure; the user can always override.
+      if (type.confidence !== "low") {
+        setCategory(type.category);
+        if (type.subcategory) setSubcategory(type.subcategory);
+      }
+    }
+
+    setIsDetectingColor(false);
   };
 
   const toggleSeason = (season: Season) => {
@@ -170,7 +184,7 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
         id,
         name: trimmedName,
         category,
-        subcategory: editingItem?.subcategory,
+        subcategory: subcategory?.trim() || undefined,
         colorName: colorFamilyLabel(colorFamily),
         colorFamily,
         tone,
@@ -232,7 +246,12 @@ export function AddItemScreen({ editingItem, onOpenLink, onClose, onSave }: Prop
             />
           </View>
 
-          <SelectField label="Category" value={category} options={categoryOptions} onChange={setCategory} />
+          <View style={styles.fieldGroup}>
+            <SelectField label="Category" value={category} options={categoryOptions} onChange={setCategory} />
+            {detectedType && detectedType.confidence !== "low" ? (
+              <Text style={styles.hint}>Detected “{detectedType.rawLabel}” from photo</Text>
+            ) : null}
+          </View>
 
           <View style={styles.grid}>
             <View style={styles.col}>
